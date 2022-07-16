@@ -1,0 +1,39 @@
+#!/bin/bash
+
+pull() {
+    echo "Pulling data..."; 
+    git submodule foreach git pull
+    echo "Pulling done"; 
+}
+
+
+push() {
+    echo "Preparing push..."; 
+    git submodule foreach git add .
+    git submodule foreach git commit -m "$@"
+    git submodule foreach git push
+    echo "Pushed (if there were any changes that is...)"; 
+}
+
+
+init() {
+    echo "Initializing submodules..."
+    git submodule update --init
+    git submodule foreach git checkout dev
+    echo "Initializing complete"
+}
+
+if [ "$1" == "init" ]; then
+    init
+else 
+    if [ "$1" == "pull" ]; then
+        pull
+    else 
+        if [ "$1" == "push" ]; then
+            if [ -z ${2+x} ]; 
+            then echo "Please provide a commit message"; 
+            else push "$2";
+            fi
+        fi
+    fi
+fi

@@ -1,0 +1,24 @@
+#!/bin/bash
+trap "echo -ne '\nstopping container...' && docker stop refinery-neural-search > /dev/null 2>&1 && echo -ne '\t\t [done]\n'" EXIT
+
+echo -ne 'stopping old container...'
+docker stop refinery-neural-search > /dev/null 2>&1
+echo -ne '\t [done]\n'
+
+echo -ne 'building container...'
+docker build -t refinery-neural-search-dev -f dev.Dockerfile . > /dev/null 2>&1
+echo -ne '\t\t [done]\n'
+
+echo -ne 'starting...'
+docker run -d --rm \
+--name refinery-neural-search \
+-p 7063:80 \
+-e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+-e QDRANT_PORT=6333 \
+--mount type=bind,source="$(pwd)"/,target=/app \
+-v /var/run/docker.sock:/var/run/docker.sock \
+--network dev-setup_default \
+refinery-neural-search-dev > /dev/null 2>&1
+echo -ne '\t\t\t [done]\n'
+
+docker logs -f refinery-neural-search

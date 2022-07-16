@@ -1,0 +1,3 @@
+[submodule "submodules/model"]
+	path = submodules/model
+	url = https://github.com/code-kern-ai/refinery-submodule-model.git

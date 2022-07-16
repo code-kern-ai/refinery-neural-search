@@ -1,0 +1,182 @@
+kind: pipeline
+type: docker
+name: amd64
+
+platform:
+  arch: amd64
+
+steps:
+  - name: submodules
+    image: alpine/git
+    commands:
+      - git submodule init
+      - 'git config --global url."https://github.com/".insteadOf git@github.com:'
+      - "git submodule update --recursive --remote"
+  - name: build and publish
+    image: plugins/docker
+    settings:
+      registry: registry.dev.onetask.ai
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: "registry.dev.onetask.ai/${DRONE_REPO}"
+      tags: ["${DRONE_COMMIT_SHA}", "${DRONE_COMMIT_BRANCH}"]
+      cache_from:
+        - "registry.dev.onetask.ai/${DRONE_REPO}:dev"
+        - "registry.dev.onetask.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}"
+  - name: trigger update
+    image: appleboy/drone-ssh
+    settings:
+      host: app.dev.onetask.ai
+      username:
+        from_secret: ssh_user
+      key:
+        from_secret: ssh_key
+      ssh_passphrase:
+        from_secret: ssh_passphrase
+      script:
+        - /bin/sh ./trigger_dev_deployment.sh
+
+trigger:
+  event:
+    - push
+
+---
+kind: pipeline
+type: docker
+name: arm64
+
+platform:
+  arch: arm64
+
+steps:
+  - name: submodules
+    image: alpine/git
+    commands:
+      - git submodule init
+      - 'git config --global url."https://github.com/".insteadOf git@github.com:'
+      - "git submodule update --recursive --remote"
+  - name: build and publish
+    image: plugins/docker
+    settings:
+      registry: registry.dev.onetask.ai
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: "registry.dev.onetask.ai/${DRONE_REPO}"
+      tags: ["${DRONE_COMMIT_SHA}_arm64", "${DRONE_COMMIT_BRANCH}_arm64"]
+      cache_from:
+        - "registry.dev.onetask.ai/${DRONE_REPO}:dev_arm64"
+        - "registry.dev.onetask.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}_arm64"
+
+trigger:
+  branch:
+    - dev
+    - beta-v2
+  event:
+    - push
+
+---
+kind: pipeline
+type: docker
+name: amd64-dockerhub
+
+platform:
+  arch: amd64
+
+steps:
+  - name: submodules
+    image: alpine/git
+    commands:
+      - git submodule init
+      - 'git config --global url."https://github.com/".insteadOf git@github.com:'
+      - "git submodule update --recursive --remote"
+  - name: build and publish
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: dockerhub_username
+      password:
+        from_secret: dockerhub_password
+      repo: "kernai/${DRONE_REPO_NAME}"
+      tag: "${DRONE_TAG}-drone-amd64"
+
+trigger:
+  event:
+    - tag
+
+---
+kind: pipeline
+type: docker
+name: arm64-dockerhub
+
+platform:
+  arch: arm64
+
+steps:
+  - name: submodules
+    image: alpine/git
+    commands:
+      - git submodule init
+      - 'git config --global url."https://github.com/".insteadOf git@github.com:'
+      - "git submodule update --recursive --remote"
+  - name: build and publish
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: dockerhub_username
+      password:
+        from_secret: dockerhub_password
+      repo: "kernai/${DRONE_REPO_NAME}"
+      tag: "${DRONE_TAG}-drone-arm64"
+
+trigger:
+  event:
+    - tag
+
+---
+kind: pipeline
+name: manifest-version
+steps:
+- name: manifest
+  image: plugins/manifest
+  settings:
+    spec: drone-manifest-version.tmpl
+    tag: "${DRONE_TAG}"
+    ignore_missing: true
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_password
+
+depends_on:
+  - amd64-dockerhub
+  - arm64-dockerhub
+
+trigger:
+  event:
+    - tag
+
+---
+kind: pipeline
+name: manifest-latest
+steps:
+- name: manifest
+  image: plugins/manifest
+  settings:
+    spec: drone-manifest-latest.tmpl
+    tag: "${DRONE_TAG}"
+    ignore_missing: true
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_password
+
+depends_on:
+  - manifest-version
+
+trigger:
+  event:
+    - tag

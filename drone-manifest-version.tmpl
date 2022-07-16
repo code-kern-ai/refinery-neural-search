@@ -1,0 +1,19 @@
+image: kernai/refinery-neural-search:{{#if build.tag}}{{build.tag}}{{else}}latest{{/if}}
+{{#if build.tags}}
+tags:
+{{#each build.tags}}
+  - {{this}}
+{{/each}}
+{{/if}}
+manifests:
+  -
+    image: kernai/refinery-neural-search:{{#if build.tag}}{{build.tag}}-{{/if}}drone-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  -
+    image: kernai/refinery-neural-search:{{#if build.tag}}{{build.tag}}-{{/if}}drone-arm64
+    platform:
+      architecture: arm64
+      os: linux
+      variant: v8
