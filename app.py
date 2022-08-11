@@ -32,18 +32,15 @@ def most_similar(
     """
     embedding_item = embedding.get_tensor(embedding_id, record_id)
     query_vector = np.array(embedding_item.data)
+    similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
     search_result = qdrant_client.search(
         collection_name=embedding_id,
         query_vector=query_vector,
         query_filter=None,
-        top=limit,
+        limit=limit,
+        score_threshold=similarity_threshold,
     )
-
-    # only return records which are more similar than the threshold
-    similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
-    similar_records = [
-        result.id for result in search_result if result.score >= similarity_threshold
-    ]
+    similar_records = [result.id for result in search_result]
 
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -52,7 +49,7 @@ def most_similar(
 
 
 @app.post("/recreate_collection")
-def recreate_collection(project_id: str, embedding_id: str) -> responses.JSONResponse:
+def recreate_collection(project_id: str, embedding_id: str) -> responses.HTMLResponse:
     """Create collection in Qdrant for the given embedding.
 
     Args:
@@ -78,7 +75,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> responses.JSONRes
 
     sim_thr.calculate_threshold(project_id, embedding_id)
 
-    return responses.JSONResponse(status_code=status.HTTP_200_OK)
+    return responses.HTMLResponse(status_code=status.HTTP_200_OK)
 
 
 @app.get("/collections")
@@ -144,7 +141,7 @@ def create_missing_collections() -> responses.JSONResponse:
 
 
 @app.put("/delete_collection")
-def delete_collection(embedding_id: str) -> responses.JSONResponse:
+def delete_collection(embedding_id: str) -> responses.HTMLResponse:
     """
     Delete collection in Qdrant for the given embedding.
 
@@ -154,7 +151,7 @@ def delete_collection(embedding_id: str) -> responses.JSONResponse:
         JSONResponse: html status code
     """
     qdrant_client.delete_collection(embedding_id)
-    return responses.JSONResponse(status_code=status.HTTP_200_OK)
+    return responses.HTMLResponse(status_code=status.HTTP_200_OK)
 
 
 @app.get("/detect_outliers")
