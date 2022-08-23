@@ -21,7 +21,7 @@ idna==3.3
 loguru==0.5.3
 multidict==6.0.2
 mypy-extensions==0.4.3
-nbconvert==6.5.0
+nbconvert==7.0.0
 numpy==1.22.3
 pathspec==0.9.0
 platformdirs==2.5.2
