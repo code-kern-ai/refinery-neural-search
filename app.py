@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI, responses, status
 from neural_search import util
+from submodules.model.business_objects import general
 
 app = FastAPI()
 
@@ -18,8 +19,9 @@ def most_similar(
     Returns:
         JSONResponse: containing HTML status code and the n most similar records
     """
+    session_token = general.get_ctx_token()
     similar_records = util.most_similar(project_id, embedding_id, record_id, limit)
-
+    general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
         content=[similar_records, ""],
@@ -35,7 +37,9 @@ def recreate_collection(project_id: str, embedding_id: str) -> responses.HTMLRes
     Returns:
         JSONResponse: html status code
     """
+    session_token = general.get_ctx_token()
     status_code = util.recreate_collection(project_id, embedding_id)
+    general.remove_and_refresh_session(session_token)
     if status_code == 404:
         return responses.JSONResponse(status_code=status.HTTP_404_NOT_FOUND)
     return responses.HTMLResponse(status_code=status.HTTP_200_OK)
@@ -61,7 +65,9 @@ def create_missing_collections() -> responses.JSONResponse:
     Returns:
         JSONResponse: html status code
     """
+    session_token = general.get_ctx_token()
     status_code, content = util.create_missing_collections()
+    general.remove_and_refresh_session(session_token)
     if status_code == 429:
         return responses.JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS, content=content
@@ -101,7 +107,9 @@ def detect_outliers(
     Returns:
         JSONResponse: html status code, if successfull the response the top_n most outlying records.
     """
+    session_token = general.get_ctx_token()
     status_code, content = util.detect_outliers(project_id, embedding_id, limit)
+    general.remove_and_refresh_session(session_token)
     if status_code == 412:
         return responses.JSONResponse(
             status_code=status.HTTP_412_PRECONDITION_FAILED, content=content
