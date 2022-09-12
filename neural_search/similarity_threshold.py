@@ -32,7 +32,7 @@ class SimilarityThreshold:
         self,
         project_id: str,
         embedding_id: str,
-        percentile: int = 95,
+        percentile: int = 5,
         limit: int = 500,
     ) -> None:
         """
@@ -75,6 +75,6 @@ class SimilarityThreshold:
         sample_embeddings = np.array(sample_embeddings)
 
         idx = np.triu_indices(sample_embeddings.shape[0], 1)
-        scores = -1 * cdist(sample_embeddings, sample_embeddings, metric=distance)[idx]
+        scores = cdist(sample_embeddings, sample_embeddings, metric=distance)[idx]
 
         return scores
