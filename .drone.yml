@@ -25,6 +25,20 @@ steps:
       cache_from:
         - "registry.dev.onetask.ai/${DRONE_REPO}:dev"
         - "registry.dev.onetask.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}"
+
+trigger:
+  event:
+    - push
+
+---
+kind: pipeline
+type: docker
+name: trigger update
+
+platform:
+  arch: amd64
+
+steps:
   - name: trigger update
     image: appleboy/drone-ssh
     settings:
@@ -38,7 +52,12 @@ steps:
       script:
         - /bin/sh ./trigger_dev_deployment.sh
 
+depends_on:
+  - amd64
+
 trigger:
+  branch:
+    - dev
   event:
     - push
 
