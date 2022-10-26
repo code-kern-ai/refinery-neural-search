@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM kernai/refinery-parent-images:v1.5.0-common
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ VOLUME ["/app"]
 
 COPY requirements.txt .
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY / .
 
