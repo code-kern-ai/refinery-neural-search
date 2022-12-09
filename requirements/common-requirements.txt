@@ -12,7 +12,7 @@ botocore==1.28.0
     # via
     #   boto3
     #   s3transfer
-certifi==2022.9.24
+certifi==2022.12.7
     # via
     #   minio
     #   requests
