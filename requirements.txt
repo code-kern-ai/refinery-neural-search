@@ -13,12 +13,12 @@ betterproto==2.0.0b4
     # via qdrant-client
 boto3==1.25.0
     # via -r requirements/common-requirements.txt
-botocore==1.28.0
+botocore==1.28.5
     # via
     #   -r requirements/common-requirements.txt
     #   boto3
     #   s3transfer
-certifi==2022.9.24
+certifi==2022.12.7
     # via
     #   -r requirements/common-requirements.txt
     #   httpcore
@@ -91,7 +91,7 @@ python-dateutil==2.8.2
     #   betterproto
     #   botocore
     #   pandas
-pytz==2022.5
+pytz==2022.6
     # via
     #   -r requirements/common-requirements.txt
     #   pandas
@@ -132,7 +132,7 @@ typing-extensions==4.4.0
     #   pydantic
     #   qdrant-client
     #   starlette
-urllib3==1.26.12
+urllib3==1.26.13
     # via
     #   -r requirements/common-requirements.txt
     #   botocore
