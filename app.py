@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI, responses, status
+from pydantic import BaseModel
+from typing import List
 from neural_search import util
 from submodules.model.business_objects import general
 
@@ -25,6 +27,30 @@ def most_similar(
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
         content=[similar_records, ""],
+    )
+
+
+class MostSimilarByEmbeddingRequest(BaseModel):
+    project_id: str
+    embedding_id: str
+    embedding_tensor: List[float]
+    limit: int = 5
+
+
+@app.post("/most_similar_by_embedding")
+def most_similar_by_embedding(
+    request: MostSimilarByEmbeddingRequest,
+) -> responses.JSONResponse:
+    """Find the n most similar records with respect to the specified embedding."""
+    similar_records = util.most_similar_by_embedding(
+        request.project_id,
+        request.embedding_id,
+        request.embedding_tensor,
+        request.limit,
+    )
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=similar_records,
     )
 
 

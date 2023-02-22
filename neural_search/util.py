@@ -18,7 +18,14 @@ missing_collections_creation_in_progress = False
 
 def most_similar(project_id: str, embedding_id: str, record_id: str, limit: int = 100):
     embedding_item = embedding.get_tensor(embedding_id, record_id)
-    query_vector = np.array(embedding_item.data)
+    embedding_tensor = embedding_item.data
+    return most_similar_by_embedding(project_id, embedding_id, embedding_tensor, limit)
+
+
+def most_similar_by_embedding(
+    project_id: str, embedding_id: str, embedding_tensor: List[float], limit: int
+) -> List[str]:
+    query_vector = np.array(embedding_tensor)
     similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
     search_result = qdrant_client.search(
         collection_name=embedding_id,
