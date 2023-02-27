@@ -24,7 +24,7 @@ def most_similar(
     general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=[similar_records, ""],
+        content=similar_records,
     )
 
 
@@ -40,9 +40,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> responses.HTMLRes
     session_token = general.get_ctx_token()
     status_code = util.recreate_collection(project_id, embedding_id)
     general.remove_and_refresh_session(session_token)
-    if status_code == 404:
-        return responses.JSONResponse(status_code=status.HTTP_404_NOT_FOUND)
-    return responses.HTMLResponse(status_code=status.HTTP_200_OK)
+    return responses.HTMLResponse(status_code=status_code)
 
 
 @app.get("/collections")
@@ -68,15 +66,7 @@ def create_missing_collections() -> responses.JSONResponse:
     session_token = general.get_ctx_token()
     status_code, content = util.create_missing_collections()
     general.remove_and_refresh_session(session_token)
-    if status_code == 429:
-        return responses.JSONResponse(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS, content=content
-        )
-    elif status_code == 412:
-        return responses.JSONResponse(
-            status_code=status.HTTP_412_PRECONDITION_FAILED, content=content
-        )
-    return responses.JSONResponse(status_code=status.HTTP_200_OK, content=content)
+    return responses.JSONResponse(status_code=status_code, content=content)
 
 
 @app.put("/delete_collection")
@@ -110,11 +100,7 @@ def detect_outliers(
     session_token = general.get_ctx_token()
     status_code, content = util.detect_outliers(project_id, embedding_id, limit)
     general.remove_and_refresh_session(session_token)
-    if status_code == 412:
-        return responses.JSONResponse(
-            status_code=status.HTTP_412_PRECONDITION_FAILED, content=content
-        )
     return responses.JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=[content, ""],
+        status_code=status_code,
+        content=content,
     )
