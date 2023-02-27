@@ -29,7 +29,9 @@ def most_similar(
 
 
 @app.post("/recreate_collection")
-def recreate_collection(project_id: str, embedding_id: str) -> responses.HTMLResponse:
+def recreate_collection(
+    project_id: str, embedding_id: str
+) -> responses.PlainTextResponse:
     """Create collection in Qdrant for the given embedding.
 
     Args:
@@ -40,7 +42,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> responses.HTMLRes
     session_token = general.get_ctx_token()
     status_code = util.recreate_collection(project_id, embedding_id)
     general.remove_and_refresh_session(session_token)
-    return responses.HTMLResponse(status_code=status_code)
+    return responses.PlainTextResponse(status_code=status_code)
 
 
 @app.get("/collections")
@@ -70,7 +72,7 @@ def create_missing_collections() -> responses.JSONResponse:
 
 
 @app.put("/delete_collection")
-def delete_collection(embedding_id: str) -> responses.HTMLResponse:
+def delete_collection(embedding_id: str) -> responses.PlainTextResponse:
     """
     Delete collection in Qdrant for the given embedding.
 
@@ -80,7 +82,7 @@ def delete_collection(embedding_id: str) -> responses.HTMLResponse:
         JSONResponse: html status code
     """
     util.delete_collection(embedding_id)
-    return responses.HTMLResponse(status_code=status.HTTP_200_OK)
+    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
 
 
 @app.get("/detect_outliers")
