@@ -3,6 +3,7 @@ import os
 from qdrant_client import QdrantClient
 from scipy.spatial.distance import cdist
 from typing import Any, Tuple, Union, List
+from fastapi import status
 
 from submodules.model.business_objects import embedding
 
@@ -34,8 +35,7 @@ def most_similar_by_embedding(
         limit=limit,
         score_threshold=similarity_threshold,
     )
-    similar_records = [result.id for result in search_result]
-    return similar_records
+    return [result.id for result in search_result]
 
 
 def recreate_collection(project_id: str, embedding_id: str) -> int:
@@ -44,7 +44,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     embeddings = np.array(embeddings)
 
     if len(embeddings) == 0:
-        return 404
+        return status.HTTP_404_NOT_FOUND
 
     vector_size = embeddings.shape[-1]
 
@@ -57,20 +57,22 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
 
     sim_thr.calculate_threshold(project_id, embedding_id)
 
-    return 200
+    return status.HTTP_200_OK
 
 
 def get_collections():
     response = qdrant_client.openapi_client.collections_api.get_collections()
-    collections = [collection.name for collection in response.result.collections]
-    return collections
+    return [collection.name for collection in response.result.collections]
 
 
 def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
     global missing_collections_creation_in_progress
 
     if missing_collections_creation_in_progress:
-        return 429, "Another process is already creating missing collections."
+        return (
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "Another process is already creating missing collections.",
+        )
 
     missing_collections_creation_in_progress = True
 
@@ -80,7 +82,7 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
 
     if not embedding_items:
         missing_collections_creation_in_progress = False
-        return 412, "No embeddings found."
+        return status.HTTP_412_PRECONDITION_FAILED, "No embeddings found."
 
     created_collections = []
     for project_id, embedding_id in embedding_items:
@@ -98,7 +100,7 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
 
     missing_collections_creation_in_progress = False
 
-    return 200, created_collections
+    return status.HTTP_200_OK, created_collections
 
 
 def delete_collection(embedding_id: str):
@@ -116,7 +118,7 @@ def detect_outliers(
 
     if len(labeled_ids) < 1:
         return (
-            412,
+            status.HTTP_412_PRECONDITION_FAILED,
             "At least one record must be labeled manually to create outlier slice.",
         )
 
@@ -139,4 +141,4 @@ def detect_outliers(
     outlier_ids = np.array(unlabeled_ids)[sorted_index[:max_records]]
     outlier_scores = outlier_scores[sorted_index[:max_records]]
 
-    return 200, [outlier_ids.tolist(), outlier_scores.tolist()]
+    return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
