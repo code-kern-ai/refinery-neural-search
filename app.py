@@ -132,3 +132,12 @@ def detect_outliers(
         status_code=status_code,
         content=content,
     )
+
+
+@app.get("/healthcheck")
+def healthcheck() -> responses.PlainTextResponse:
+    headers = {"APP": "OK"}
+    database_test = general.test_database_connection()
+    if not database_test.get("success"):
+        headers["DATABASE"] = database_test.get("error")
+    return responses.PlainTextResponse("OK", headers=headers)
