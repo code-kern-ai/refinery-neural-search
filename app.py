@@ -42,12 +42,14 @@ def most_similar_by_embedding(
     request: MostSimilarByEmbeddingRequest,
 ) -> responses.JSONResponse:
     """Find the n most similar records with respect to the specified embedding."""
+    session_token = general.get_ctx_token()
     similar_records = util.most_similar_by_embedding(
         request.project_id,
         request.embedding_id,
         request.embedding_tensor,
         request.limit,
     )
+    general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
         content=similar_records,
