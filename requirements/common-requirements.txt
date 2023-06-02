@@ -24,7 +24,7 @@ exceptiongroup==1.1.1
     # via anyio
 fastapi==0.95.2
     # via -r mini-requirements.in
-h11==0.14.0
+# h11==0.14.0
     # via uvicorn
 idna==3.4
     # via
