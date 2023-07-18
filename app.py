@@ -44,37 +44,6 @@ def most_similar(
     )
 
 
-# @app.post("/most_similar_with")
-# def most_similar_with(
-#     project_id: str,
-#     embedding_id: str,
-#     record_id: str,
-#     limit: int = 100,
-#     att_filter: Optional[List[Dict[str, Any]]] = None,
-# ) -> responses.JSONResponse:
-#     """Find the n most similar records with respect to the specified record with only matching attributes.
-
-
-#     Args:
-#         embedding_id (str): Embedding id.
-#         record_id (str): The record for which similar records are searched.
-#         limit (int): Specifies the maximum amount of returned records.
-#         att_filter(Optional[Dict[str, str]]): Specifies the attribute filter for the search as name-value pairs.
-#     Returns:
-#         JSONResponse: containing HTML status code and the n most similar records
-#     """
-#     print(att_filter, flush=True)
-#     session_token = general.get_ctx_token()
-#     similar_records = util.most_similar(
-#         project_id, embedding_id, record_id, limit, att_filter
-#     )
-#     general.remove_and_refresh_session(session_token)
-#     return responses.JSONResponse(
-#         status_code=status.HTTP_200_OK,
-#         content=similar_records,
-#     )
-
-
 class MostSimilarByEmbeddingRequest(BaseModel):
     project_id: str
     embedding_id: str
