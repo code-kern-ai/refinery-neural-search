@@ -1,8 +1,9 @@
 import numpy as np
 import os
 from qdrant_client import QdrantClient
+from qdrant_client.http import models
 from scipy.spatial.distance import cdist
-from typing import Any, Tuple, Union, List
+from typing import Any, Tuple, Union, List, Optional, Dict
 from fastapi import status
 
 from submodules.model.business_objects import embedding
@@ -17,44 +18,99 @@ sim_thr = SimilarityThreshold(qdrant_client)
 missing_collections_creation_in_progress = False
 
 
-def most_similar(project_id: str, embedding_id: str, record_id: str, limit: int = 100):
+def most_similar(
+    project_id: str,
+    embedding_id: str,
+    record_id: str,
+    limit: int = 100,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
+):
     embedding_item = embedding.get_tensor(embedding_id, record_id)
     embedding_tensor = embedding_item.data
-    return most_similar_by_embedding(project_id, embedding_id, embedding_tensor, limit)
+    return most_similar_by_embedding(
+        project_id, embedding_id, embedding_tensor, limit, att_filter
+    )
 
 
 def most_similar_by_embedding(
-    project_id: str, embedding_id: str, embedding_tensor: List[float], limit: int
+    project_id: str,
+    embedding_id: str,
+    embedding_tensor: List[float],
+    limit: int,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
 ) -> List[str]:
     query_vector = np.array(embedding_tensor)
     similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
     search_result = qdrant_client.search(
         collection_name=embedding_id,
         query_vector=query_vector,
-        query_filter=None,
+        query_filter=__build_filter(att_filter),
         limit=limit,
         score_threshold=similarity_threshold,
     )
     return [result.id for result in search_result]
 
 
-def recreate_collection(project_id: str, embedding_id: str) -> int:
-    tensors = embedding.get_tensors_by_embedding_id(embedding_id)
-    ids, embeddings = zip(*tensors)
-    embeddings = np.array(embeddings)
+# example_filter = [
+# {"key": "name", "value": ["John", "Doe"]}, -> name IN ("John", "Doe")
+# {"key": "age", "value": 42}, -> age = 42
+# {"key": "age", "value": [35,40]}, -> age IN (35,40)
+# {"key": "age", "value": [35,40], type:"between"} -> age BETWEEN 35 AND 40 (includes 35 and 40)
+# ]
+def __build_filter(att_filter: List[Dict[str, Any]]) -> models.Filter:
+    if att_filter is None or len(att_filter) == 0:
+        return None
+    must = [__build_filter_item(filter_item) for filter_item in att_filter]
+    return models.Filter(must=must)
 
+
+def __build_filter_item(filter_item: Dict[str, Any]) -> models.FieldCondition:
+    if isinstance(filter_item["value"], list):
+        if filter_item.get("type") == "between":
+            return models.FieldCondition(
+                key=filter_item["key"],
+                range=models.Range(
+                    gte=filter_item["value"][0],
+                    lte=filter_item["value"][1],
+                ),
+            )
+        else:
+            should = [
+                models.FieldCondition(
+                    key=filter_item["key"], match=models.MatchValue(value=value)
+                )
+                for value in filter_item["value"]
+            ]
+            return models.Filter(should=should)
+    else:
+        return models.FieldCondition(
+            key=filter_item["key"],
+            match=models.MatchValue(
+                value=filter_item["value"],
+            ),
+        )
+
+
+def recreate_collection(project_id: str, embedding_id: str) -> int:
+    filter_attribute_dict = embedding.get_filter_attribute_type_dict(
+        project_id, embedding_id
+    )
+    all_object = embedding.get_tensors_and_attributes_for_qdrant(
+        project_id, embedding_id, filter_attribute_dict
+    )
+
+    ids, embeddings, payloads = zip(*all_object)
+    embeddings = np.array(embeddings)
     if len(embeddings) == 0:
         return status.HTTP_404_NOT_FOUND
-
     vector_size = embeddings.shape[-1]
 
     qdrant_client.recreate_collection(
         collection_name=embedding_id, vector_size=vector_size, distance="Euclid"
     )
     qdrant_client.upload_collection(
-        collection_name=embedding_id, vectors=embeddings, payload=None, ids=ids
+        collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
     )
-
     sim_thr.calculate_threshold(project_id, embedding_id)
 
     return status.HTTP_200_OK
