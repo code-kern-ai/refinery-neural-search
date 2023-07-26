@@ -39,6 +39,10 @@ def most_similar_by_embedding(
     limit: int,
     att_filter: Optional[List[Dict[str, Any]]] = None,
 ) -> List[str]:
+
+    if not is_filter_valid_for_embedding(project_id, embedding_id, att_filter):
+        return []
+    
     query_vector = np.array(embedding_tensor)
     similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
     search_result = qdrant_client.search(
@@ -51,6 +55,19 @@ def most_similar_by_embedding(
     return [result.id for result in search_result]
 
 
+def is_filter_valid_for_embedding(project_id: str, embedding_id: str, att_filter: Optional[List[Dict[str, Any]]] = None) -> bool:
+    if not att_filter:
+        return True
+    
+    embedding_item = embedding.get(project_id, embedding_id)
+    filter_attributes = embedding_item.filter_attributes
+    filter_attribute_keys = [filter_attribute["key"] for filter_attribute in att_filter]
+    for filter_attribute_key in filter_attribute_keys:
+        if filter_attribute_key not in filter_attributes:
+            return False
+        
+    return True
+        
 # example_filter = [
 # {"key": "name", "value": ["John", "Doe"]}, -> name IN ("John", "Doe")
 # {"key": "age", "value": 42}, -> age = 42
