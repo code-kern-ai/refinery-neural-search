@@ -221,3 +221,16 @@ def detect_outliers(
     outlier_scores = outlier_scores[sorted_index[:max_records]]
 
     return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
+
+
+def update_embedding_payload(project_id: str,embedding_id:str):
+    filter_attribute_dict = embedding.get_filter_attribute_type_dict(
+        project_id, embedding_id
+    )
+    embedding_items = embedding.get_tensors_and_attributes_for_qdrant(
+        project_id, embedding_id, filter_attribute_dict
+    )
+    ids, embeddings, payloads = zip(*embedding_items)
+    qdrant_client.upload_collection(
+        collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
+    )
