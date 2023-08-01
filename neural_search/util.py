@@ -54,7 +54,6 @@ def most_similar_by_embedding(
             limit=limit,
             score_threshold=similarity_threshold,
         )
-        print(f"search_result: {search_result}")
         return [result.id for result in search_result]
     except Exception as e:
         print(f"search failed with error: {e}")
