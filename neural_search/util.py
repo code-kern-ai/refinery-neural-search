@@ -39,10 +39,9 @@ def most_similar_by_embedding(
     limit: int,
     att_filter: Optional[List[Dict[str, Any]]] = None,
 ) -> List[str]:
-
     if not is_filter_valid_for_embedding(project_id, embedding_id, att_filter):
         return []
-    
+
     query_vector = np.array(embedding_tensor)
     similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
 
@@ -60,25 +59,23 @@ def most_similar_by_embedding(
         return []
 
 
-def is_filter_valid_for_embedding(project_id: str, embedding_id: str, att_filter: Optional[List[Dict[str, Any]]] = None) -> bool:
+def is_filter_valid_for_embedding(
+    project_id: str,
+    embedding_id: str,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
+) -> bool:
     if not att_filter:
         return True
-    
+
     embedding_item = embedding.get(project_id, embedding_id)
     filter_attributes = embedding_item.filter_attributes
-    filter_attribute_keys = [filter_attribute["key"] for filter_attribute in att_filter]
-    for filter_attribute_key in filter_attribute_keys:
-        if filter_attribute_key not in filter_attributes:
+    for filter_attribute in att_filter:
+        if filter_attribute["key"] not in filter_attributes:
             return False
-        
+
     return True
-        
-# example_filter = [
-# {"key": "name", "value": ["John", "Doe"]}, -> name IN ("John", "Doe")
-# {"key": "age", "value": 42}, -> age = 42
-# {"key": "age", "value": [35,40]}, -> age IN (35,40)
-# {"key": "age", "value": [35,40], type:"between"} -> age BETWEEN 35 AND 40 (includes 35 and 40)
-# ]
+
+
 def __build_filter(att_filter: List[Dict[str, Any]]) -> models.Filter:
     if att_filter is None or len(att_filter) == 0:
         return None
@@ -164,7 +161,6 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
 
     created_collections = []
     for project_id, embedding_id in embedding_items:
-
         if embedding_id in collections:
             continue
 
@@ -220,16 +216,3 @@ def detect_outliers(
     outlier_scores = outlier_scores[sorted_index[:max_records]]
 
     return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
-
-
-def update_embedding_payload(project_id: str,embedding_id:str):
-    filter_attribute_dict = embedding.get_filter_attribute_type_dict(
-        project_id, embedding_id
-    )
-    embedding_items = embedding.get_tensors_and_attributes_for_qdrant(
-        project_id, embedding_id, filter_attribute_dict
-    )
-    ids, embeddings, payloads = zip(*embedding_items)
-    qdrant_client.upload_collection(
-        collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
-    )
