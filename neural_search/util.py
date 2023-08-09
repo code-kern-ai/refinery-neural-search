@@ -123,9 +123,15 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     qdrant_client.recreate_collection(
         collection_name=embedding_id, vector_size=vector_size, distance="Euclid"
     )
-    qdrant_client.upload_collection(
-        collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
-    )
+    all_none = all([payload is None for payload in payloads])
+    if all_none:
+        qdrant_client.upload_collection(
+            collection_name=embedding_id, vectors=embeddings, ids=ids
+        )
+    else:
+        qdrant_client.upload_collection(
+            collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
+        )
     sim_thr.calculate_threshold(project_id, embedding_id)
 
     return status.HTTP_200_OK
