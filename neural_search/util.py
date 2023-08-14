@@ -45,13 +45,16 @@ def most_similar_by_embedding(
     query_vector = np.array(embedding_tensor)
     similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
 
-    search_result = qdrant_client.search(
-        collection_name=embedding_id,
-        query_vector=query_vector,
-        query_filter=__build_filter(att_filter),
-        limit=limit,
-        score_threshold=similarity_threshold,
-    )
+    try:
+        search_result = qdrant_client.search(
+            collection_name=embedding_id,
+            query_vector=query_vector,
+            query_filter=__build_filter(att_filter),
+            limit=limit,
+            score_threshold=similarity_threshold,
+        )
+    except Exception:
+        return []
     return [result.id for result in search_result]
 
 
