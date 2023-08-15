@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI, responses, status
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from neural_search import util
 from submodules.model.business_objects import general
 
@@ -50,6 +50,7 @@ class MostSimilarByEmbeddingRequest(BaseModel):
     embedding_tensor: List[float]
     limit: int = 5
     att_filter: Optional[List[Dict[str, Any]]] = None
+    threshold: Optional[Union[float, int]] = None
 
 
 @app.post("/most_similar_by_embedding")
@@ -62,7 +63,7 @@ def most_similar_by_embedding(
         record_id (str): The record for which similar records are searched.
         limit (int): Specifies the maximum amount of returned records.
         att_filter(Optional[Dict[str, Any]]]): Specifies the attribute filter for the search as dict objects.
-
+        threshold: Optional[float]: None = calculated DB threshold, -9999 = no threshold, specified = use value
         example_filter = [
             {"key": "name", "value": ["John", "Doe"]}, -> name IN ("John", "Doe")
             {"key": "age", "value": 42}, -> age = 42
@@ -73,12 +74,15 @@ def most_similar_by_embedding(
         JSONResponse: containing HTML status code and the n most similar records
     """
     session_token = general.get_ctx_token()
+    if isinstance(request.threshold, int):
+        request.threshold = float(request.threshold)
     similar_records = util.most_similar_by_embedding(
         request.project_id,
         request.embedding_id,
         request.embedding_tensor,
         request.limit,
         request.att_filter,
+        request.threshold,
     )
     general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
