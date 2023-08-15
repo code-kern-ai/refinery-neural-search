@@ -38,9 +38,14 @@ def most_similar_by_embedding(
     embedding_tensor: List[float],
     limit: int,
     att_filter: Optional[List[Dict[str, Any]]] = None,
+    threshold: Optional[float] = None,
 ) -> List[str]:
     query_vector = np.array(embedding_tensor)
-    similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
+    similarity_threshold = threshold
+    if similarity_threshold is None:
+        similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
+    elif similarity_threshold == -9999:
+        similarity_threshold = None
     search_result = qdrant_client.search(
         collection_name=embedding_id,
         query_vector=query_vector,
