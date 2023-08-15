@@ -40,28 +40,45 @@ def most_similar_by_embedding(
     att_filter: Optional[List[Dict[str, Any]]] = None,
     threshold: Optional[float] = None,
 ) -> List[str]:
+    if not is_filter_valid_for_embedding(project_id, embedding_id, att_filter):
+        return []
+
     query_vector = np.array(embedding_tensor)
     similarity_threshold = threshold
     if similarity_threshold is None:
         similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
     elif similarity_threshold == -9999:
         similarity_threshold = None
-    search_result = qdrant_client.search(
-        collection_name=embedding_id,
-        query_vector=query_vector,
-        query_filter=__build_filter(att_filter),
-        limit=limit,
-        score_threshold=similarity_threshold,
-    )
+    try:
+        search_result = qdrant_client.search(
+            collection_name=embedding_id,
+            query_vector=query_vector,
+            query_filter=__build_filter(att_filter),
+            limit=limit,
+            score_threshold=similarity_threshold,
+        )
+    except Exception:
+        return []
     return [result.id for result in search_result]
 
 
-# example_filter = [
-# {"key": "name", "value": ["John", "Doe"]}, -> name IN ("John", "Doe")
-# {"key": "age", "value": 42}, -> age = 42
-# {"key": "age", "value": [35,40]}, -> age IN (35,40)
-# {"key": "age", "value": [35,40], type:"between"} -> age BETWEEN 35 AND 40 (includes 35 and 40)
-# ]
+def is_filter_valid_for_embedding(
+    project_id: str,
+    embedding_id: str,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
+) -> bool:
+    if not att_filter:
+        return True
+
+    embedding_item = embedding.get(project_id, embedding_id)
+    filter_attributes = embedding_item.filter_attributes
+    for filter_attribute in att_filter:
+        if filter_attribute["key"] not in filter_attributes:
+            return False
+
+    return True
+
+
 def __build_filter(att_filter: List[Dict[str, Any]]) -> models.Filter:
     if att_filter is None or len(att_filter) == 0:
         return None
@@ -113,9 +130,15 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     qdrant_client.recreate_collection(
         collection_name=embedding_id, vector_size=vector_size, distance="Euclid"
     )
-    qdrant_client.upload_collection(
-        collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
-    )
+    all_none = all([payload is None for payload in payloads])
+    if all_none:
+        qdrant_client.upload_collection(
+            collection_name=embedding_id, vectors=embeddings, ids=ids
+        )
+    else:
+        qdrant_client.upload_collection(
+            collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
+        )
     sim_thr.calculate_threshold(project_id, embedding_id)
 
     return status.HTTP_200_OK
@@ -147,7 +170,6 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
 
     created_collections = []
     for project_id, embedding_id in embedding_items:
-
         if embedding_id in collections:
             continue
 
