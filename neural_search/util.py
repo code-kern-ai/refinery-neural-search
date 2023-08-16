@@ -162,7 +162,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
 
 def get_collections():
     response = qdrant_client.get_collections()
-    return [collection.name for collection in response.result.collections]
+    return [collection.name for collection in response.collections]
 
 
 def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
@@ -177,7 +177,7 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
     missing_collections_creation_in_progress = True
 
     response = qdrant_client.get_collections()
-    collections = [collection.name for collection in response.result.collections]
+    collections = [collection.name for collection in response]
     embedding_items = embedding.get_finished_attribute_embeddings()
 
     if not embedding_items:
