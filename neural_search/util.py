@@ -72,6 +72,8 @@ def is_filter_valid_for_embedding(
 
     embedding_item = embedding.get(project_id, embedding_id)
     filter_attributes = embedding_item.filter_attributes
+    if not filter_attributes:
+        return False
     for filter_attribute in att_filter:
         if filter_attribute["key"] not in filter_attributes:
             return False
