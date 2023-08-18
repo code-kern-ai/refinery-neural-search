@@ -138,8 +138,10 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
         ),
     )
     records = None
-    isPython = embedding.get(project_id, embedding_id).platform == "python"
-    if isPython:
+    if (
+        embedding.get(project_id, embedding_id).platform
+        == EmbeddingPlatform.PYTHON.value
+    ):
         embeddings = [[float(e) for e in embedding] for embedding in embeddings]
 
     if len(payloads) > 0 and payloads[0] is None:
