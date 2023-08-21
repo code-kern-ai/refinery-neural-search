@@ -7,6 +7,7 @@ from typing import Any, Tuple, Union, List, Optional, Dict
 from fastapi import status
 
 from submodules.model.business_objects import embedding
+from submodules.model.enums import EmbeddingPlatform
 
 from .similarity_threshold import SimilarityThreshold
 
@@ -124,31 +125,53 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     )
 
     ids, embeddings, payloads = zip(*all_object)
-    embeddings = np.array(embeddings)
     if len(embeddings) == 0:
         return status.HTTP_404_NOT_FOUND
-    vector_size = embeddings.shape[-1]
+    vector_size = 0
+    if len(embeddings) > 0 and embeddings[0] is not None:
+        vector_size = len(embeddings[0])
 
     qdrant_client.recreate_collection(
-        collection_name=embedding_id, vector_size=vector_size, distance="Euclid"
+        collection_name=embedding_id,
+        vectors_config=models.VectorParams(
+            size=vector_size, distance=models.Distance.EUCLID
+        ),
     )
-    all_none = all([payload is None for payload in payloads])
-    if all_none:
-        qdrant_client.upload_collection(
-            collection_name=embedding_id, vectors=embeddings, ids=ids
-        )
+    records = None
+    if (
+        embedding.get(project_id, embedding_id).platform
+        == EmbeddingPlatform.PYTHON.value
+    ):
+        embeddings = [[float(e) for e in embedding] for embedding in embeddings]
+
+    if len(payloads) > 0 and payloads[0] is None:
+        records = [
+            models.Record(
+                id=id,
+                vector=embedding,
+            )
+            for id, embedding in zip(ids, embeddings)
+        ]
     else:
-        qdrant_client.upload_collection(
-            collection_name=embedding_id, vectors=embeddings, payload=payloads, ids=ids
-        )
+        records = [
+            models.Record(id=id, vector=e, payload=payload)
+            for id, e, payload in zip(ids, embeddings, payloads)
+        ]
+
+    qdrant_client.upload_records(collection_name=embedding_id, records=records)
     sim_thr.calculate_threshold(project_id, embedding_id)
 
     return status.HTTP_200_OK
 
 
 def get_collections():
-    response = qdrant_client.openapi_client.collections_api.get_collections()
-    return [collection.name for collection in response.result.collections]
+    collections = []
+
+    try:
+        response = qdrant_client.get_collections()
+        collections = [collection.name for collection in response]
+    except Exception:
+        return collections
 
 
 def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
@@ -161,9 +184,7 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
         )
 
     missing_collections_creation_in_progress = True
-
-    response = qdrant_client.openapi_client.collections_api.get_collections()
-    collections = [collection.name for collection in response.result.collections]
+    collections = get_collections()
     embedding_items = embedding.get_finished_attribute_embeddings()
 
     if not embedding_items:
@@ -179,7 +200,7 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
             recreate_collection(project_id, embedding_id)
             created_collections.append(embedding_id)
         except Exception as e:
-            qdrant_client.delete_collection(embedding_id)
+            qdrant_client.delete_collection(collection_name=embedding_id)
             print(f"this did not work :(  -> {embedding_id}")
             print(f"Aaaand the error goes to {e}")
 
@@ -189,7 +210,7 @@ def create_missing_collections() -> Tuple[int, Union[List[str], str]]:
 
 
 def delete_collection(embedding_id: str):
-    qdrant_client.delete_collection(embedding_id)
+    qdrant_client.delete_collection(collection_name=embedding_id)
 
 
 def detect_outliers(
