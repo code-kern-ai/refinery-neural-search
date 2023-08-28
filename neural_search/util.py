@@ -43,7 +43,11 @@ def most_similar_by_embedding(
 ) -> List[str]:
     if not is_filter_valid_for_embedding(project_id, embedding_id, att_filter):
         return []
-
+    tmp_limit = limit
+    has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+    if has_sub_key:
+        # new tmp limit to ensure that we get enough results for embedding lists
+        tmp_limit = (limit * 3) + 25
     query_vector = np.array(embedding_tensor)
     similarity_threshold = threshold
     if similarity_threshold is None:
@@ -55,12 +59,16 @@ def most_similar_by_embedding(
             collection_name=embedding_id,
             query_vector=query_vector,
             query_filter=__build_filter(att_filter),
-            limit=limit,
+            limit=tmp_limit,
             score_threshold=similarity_threshold,
         )
     except Exception:
         return []
-    return [result.id for result in search_result]
+
+    ids = [result.id for result in search_result]
+    return embedding.get_match_record_ids_to_qdrant_ids(
+        project_id, embedding_id, ids, limit
+    )
 
 
 def is_filter_valid_for_embedding(
@@ -123,7 +131,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     all_object = embedding.get_tensors_and_attributes_for_qdrant(
         project_id, embedding_id, filter_attribute_dict
     )
-
+    # note embedding lists use tensor id, others use record ids
     ids, embeddings, payloads = zip(*all_object)
     if len(embeddings) == 0:
         return status.HTTP_404_NOT_FOUND
