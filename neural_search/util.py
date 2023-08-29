@@ -25,8 +25,9 @@ def most_similar(
     record_id: str,
     limit: int = 100,
     att_filter: Optional[List[Dict[str, Any]]] = None,
+    record_sub_key: Optional[int] = None,
 ):
-    embedding_item = embedding.get_tensor(embedding_id, record_id)
+    embedding_item = embedding.get_tensor(embedding_id, record_id,record_sub_key)
     embedding_tensor = embedding_item.data
     return most_similar_by_embedding(
         project_id, embedding_id, embedding_tensor, limit, att_filter

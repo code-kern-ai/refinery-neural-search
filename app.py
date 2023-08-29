@@ -15,6 +15,7 @@ def most_similar(
     record_id: str,
     limit: int = 100,
     att_filter: Optional[List[Dict[str, Any]]] = None,
+    record_sub_key: Optional[int] = None,
 ) -> responses.JSONResponse:
     """Find the n most similar records with respect to the specified record.
 
@@ -35,7 +36,7 @@ def most_similar(
     """
     session_token = general.get_ctx_token()
     similar_records = util.most_similar(
-        project_id, embedding_id, record_id, limit, att_filter
+        project_id, embedding_id, record_id, limit, att_filter, record_sub_key
     )
     general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
