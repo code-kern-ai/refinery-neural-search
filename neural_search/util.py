@@ -47,7 +47,8 @@ def most_similar_by_embedding(
     has_sub_key = embedding.has_sub_key(project_id, embedding_id)
     if has_sub_key:
         # new tmp limit to ensure that we get enough results for embedding lists
-        tmp_limit = (limit * 3) + 25
+        limit_factor = embedding.get_qdrant_limit_factor(project_id, embedding_id)
+        tmp_limit = (limit * limit_factor) + 25
     query_vector = np.array(embedding_tensor)
     similarity_threshold = threshold
     if similarity_threshold is None:
