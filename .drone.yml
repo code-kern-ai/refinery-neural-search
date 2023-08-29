@@ -11,7 +11,7 @@ steps:
     commands:
       - git submodule init
       - 'git config --global url."https://github.com/".insteadOf git@github.com:'
-      - "git submodule update --recursive --remote"
+      - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker
     settings:
@@ -75,7 +75,7 @@ steps:
     commands:
       - git submodule init
       - 'git config --global url."https://github.com/".insteadOf git@github.com:'
-      - "git submodule update --recursive --remote"
+      - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker
     settings:
@@ -111,7 +111,7 @@ steps:
     commands:
       - git submodule init
       - 'git config --global url."https://github.com/".insteadOf git@github.com:'
-      - "git submodule update --recursive --remote"
+      - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker
     settings:
@@ -140,7 +140,7 @@ steps:
     commands:
       - git submodule init
       - 'git config --global url."https://github.com/".insteadOf git@github.com:'
-      - "git submodule update --recursive --remote"
+      - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker
     settings:
