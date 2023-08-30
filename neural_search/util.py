@@ -27,7 +27,7 @@ def most_similar(
     att_filter: Optional[List[Dict[str, Any]]] = None,
     record_sub_key: Optional[int] = None,
 ):
-    embedding_item = embedding.get_tensor(embedding_id, record_id,record_sub_key)
+    embedding_item = embedding.get_tensor(embedding_id, record_id, record_sub_key)
     embedding_tensor = embedding_item.data
     return most_similar_by_embedding(
         project_id, embedding_id, embedding_tensor, limit, att_filter
@@ -48,6 +48,8 @@ def most_similar_by_embedding(
     has_sub_key = embedding.has_sub_key(project_id, embedding_id)
     if has_sub_key:
         # new tmp limit to ensure that we get enough results for embedding lists
+        # since the limit factor is just an average of embedding list entries rounded up this could be to little depending on the
+        # explicit question and the amount of matched sub_keys so we add another 25 to be sure
         limit_factor = embedding.get_qdrant_limit_factor(project_id, embedding_id)
         tmp_limit = (limit * limit_factor) + 25
     query_vector = np.array(embedding_tensor)
