@@ -4,7 +4,7 @@
 #
 #    pip-compile common-requirements.in
 #
-anyio==4.0.0
+# anyio==4.0.0
     # via starlette
 boto3==1.25.0
     # via -r common-requirements.in
@@ -24,7 +24,7 @@ exceptiongroup==1.1.3
     # via anyio
 fastapi==0.95.2
     # via -r mini-requirements.in
-h11==0.14.0
+# h11==0.14.0
     # via uvicorn
 idna==3.4
     # via
