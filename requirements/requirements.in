@@ -2,4 +2,4 @@
 # because it is not compatible with the version of qdrant-client
 -r common-requirements.txt
 qdrant-client==1.4.0
-scipy==1.9.0
+scipy==1.11.2
