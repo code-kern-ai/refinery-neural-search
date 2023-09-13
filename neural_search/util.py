@@ -85,12 +85,11 @@ def is_filter_valid_for_embedding(
 
     embedding_item = embedding.get(project_id, embedding_id)
     filter_attributes = embedding_item.filter_attributes
-    if not filter_attributes:
+    label_filter = [__is_label_filter(filter_item["key"]) for filter_item in att_filter]
+    if not filter_attributes and not any(label_filter):
         return False
-    for filter_attribute in att_filter:
-        if filter_attribute["key"] not in filter_attributes and not __is_label_filter(
-            filter_attribute["key"]
-        ):
+    for idx, filter_attribute in enumerate(att_filter):
+        if filter_attribute["key"] not in filter_attributes and not label_filter[idx]:
             return False
 
     return True
