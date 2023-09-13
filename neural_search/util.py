@@ -6,7 +6,7 @@ from scipy.spatial.distance import cdist
 from typing import Any, Tuple, Union, List, Optional, Dict
 from fastapi import status
 
-from submodules.model.business_objects import embedding
+from submodules.model.business_objects import embedding, record_label_association
 from submodules.model.enums import EmbeddingPlatform
 
 from .similarity_threshold import SimilarityThreshold
@@ -88,10 +88,19 @@ def is_filter_valid_for_embedding(
     if not filter_attributes:
         return False
     for filter_attribute in att_filter:
-        if filter_attribute["key"] not in filter_attributes:
+        if filter_attribute["key"] not in filter_attributes and not __is_label_filter(
+            filter_attribute["key"]
+        ):
             return False
 
     return True
+
+
+def __is_label_filter(key: str) -> bool:
+    parts = key.split(".")
+    if len(parts) == 1:
+        return False
+    return parts[0] == "labels"
 
 
 def __build_filter(att_filter: List[Dict[str, Any]]) -> models.Filter:
@@ -156,19 +165,18 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     ):
         embeddings = [[float(e) for e in embedding] for embedding in embeddings]
 
-    if len(payloads) > 0 and payloads[0] is None:
-        records = [
-            models.Record(
-                id=id,
-                vector=embedding,
-            )
-            for id, embedding in zip(ids, embeddings)
-        ]
-    else:
-        records = [
-            models.Record(id=id, vector=e, payload=payload)
-            for id, e, payload in zip(ids, embeddings, payloads)
-        ]
+    # extend payloads
+    label_payload_extension = record_label_association.get_label_payload_for_qdrant(
+        project_id
+    )
+    for record_id, payload in zip(ids, payloads):
+        if record_id in label_payload_extension:
+            payload["labels"] = label_payload_extension[record_id]
+
+    records = [
+        models.Record(id=id, vector=e, payload=payload)
+        for id, e, payload in zip(ids, embeddings, payloads)
+    ]
 
     qdrant_client.upload_records(collection_name=embedding_id, records=records)
     sim_thr.calculate_threshold(project_id, embedding_id)
