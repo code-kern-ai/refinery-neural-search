@@ -70,6 +70,7 @@ def most_similar_by_embedding(
         return []
 
     ids = [result.id for result in search_result]
+
     return embedding.get_match_record_ids_to_qdrant_ids(
         project_id, embedding_id, ids, limit
     )
@@ -85,11 +86,10 @@ def is_filter_valid_for_embedding(
 
     embedding_item = embedding.get(project_id, embedding_id)
     filter_attributes = embedding_item.filter_attributes
-    label_filter = [__is_label_filter(filter_item["key"]) for filter_item in att_filter]
-    if not filter_attributes and not any(label_filter):
-        return False
-    for idx, filter_attribute in enumerate(att_filter):
-        if filter_attribute["key"] not in filter_attributes and not label_filter[idx]:
+    for filter_attribute in att_filter:
+        if filter_attribute["key"] not in filter_attributes and not __is_label_filter(
+            filter_attribute["key"]
+        ):
             return False
 
     return True
@@ -144,7 +144,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
         project_id, embedding_id, filter_attribute_dict
     )
     # note embedding lists use tensor id, others use record ids
-    ids, embeddings, payloads = zip(*all_object)
+    record_ids, embeddings, payloads, tensor_ids = zip(*all_object)
     if len(embeddings) == 0:
         return status.HTTP_404_NOT_FOUND
     vector_size = 0
@@ -168,13 +168,22 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     label_payload_extension = record_label_association.get_label_payload_for_qdrant(
         project_id
     )
-    for record_id, payload in zip(ids, payloads):
+
+    has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+
+    for record_id, payload in zip(record_ids, payloads):
         if record_id in label_payload_extension:
             payload["labels"] = label_payload_extension[record_id]
 
+    id_for_storage = None
+    if has_sub_key:
+        id_for_storage = tensor_ids
+    else:
+        id_for_storage = record_ids
+
     records = [
         models.Record(id=id, vector=e, payload=payload)
-        for id, e, payload in zip(ids, embeddings, payloads)
+        for id, e, payload in zip(id_for_storage, embeddings, payloads)
     ]
 
     qdrant_client.upload_records(collection_name=embedding_id, records=records)
