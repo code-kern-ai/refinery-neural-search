@@ -158,6 +158,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
         ),
     )
     records = None
+
     if (
         embedding.get(project_id, embedding_id).platform
         == EmbeddingPlatform.PYTHON.value
