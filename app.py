@@ -135,6 +135,24 @@ def create_missing_collections() -> responses.JSONResponse:
     return responses.JSONResponse(status_code=status_code, content=content)
 
 
+class UpdataPayloadRequest(BaseModel):
+    project_id: str
+    embedding_id: str
+    record_ids: Optional[List[str]] = None
+
+
+@app.put("/update_payloads")
+def update_payloads(
+    request: UpdataPayloadRequest,
+) -> responses.JSONResponse:
+    util.update_payloads(
+        request.project_id,
+        request.embedding_id,
+        request.record_ids,
+    )
+    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+
+
 @app.put("/delete_collection")
 def delete_collection(embedding_id: str) -> responses.PlainTextResponse:
     """

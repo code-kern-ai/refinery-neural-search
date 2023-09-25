@@ -277,3 +277,41 @@ def detect_outliers(
     outlier_scores = outlier_scores[sorted_index[:max_records]]
 
     return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
+
+
+def update_payloads(
+    project_id: str,
+    embedding_id: str,
+    record_ids: Optional[List[str]],
+) -> None:
+    has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+    filter_attribute_dict = embedding.get_filter_attribute_type_dict(
+        project_id, embedding_id
+    )
+
+    if has_sub_key:
+        all_object = embedding.get_tensors_and_attributes_for_qdrant(
+            project_id, embedding_id, filter_attribute_dict, record_ids, True
+        )
+        _, payloads, ids_for_storage = zip(*all_object)
+    else:
+        all_object = embedding.get_attributes_for_qdrant(
+            project_id, record_ids, filter_attribute_dict
+        )
+        ids_for_storage, payloads = zip(*all_object)
+
+    update_operations = []
+    for record_id, payload in zip(ids_for_storage, payloads):
+        update_operations.append(
+            models.OverwritePayloadOperation(
+                overwrite_payload=models.SetPayload(
+                    payload=payload,
+                    points=[record_id],
+                )
+            )
+        )
+
+    qdrant_client.batch_update_points(
+        collection_name=embedding_id,
+        update_operations=update_operations,
+    )
