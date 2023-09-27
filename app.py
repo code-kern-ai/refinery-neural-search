@@ -135,19 +135,37 @@ def create_missing_collections() -> responses.JSONResponse:
     return responses.JSONResponse(status_code=status_code, content=content)
 
 
-class UpdataPayloadRequest(BaseModel):
+class UpdateAttributePayloadsRequest(BaseModel):
     project_id: str
     embedding_id: str
     record_ids: Optional[List[str]] = None
 
 
-@app.put("/update_payloads")
-def update_payloads(
-    request: UpdataPayloadRequest,
+@app.post("/update_attribute_payloads")
+def update_attribute_payloads(
+    request: UpdateAttributePayloadsRequest,
 ) -> responses.JSONResponse:
-    util.update_payloads(
+    util.update_attribute_payloads(
         request.project_id,
         request.embedding_id,
+        request.record_ids,
+    )
+    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+
+
+class UpdateLabelPayloadsRequest(BaseModel):
+    project_id: str
+    embedding_ids: List[str]
+    record_ids: Optional[List[str]] = None
+
+
+@app.post("/update_label_payloads")
+def update_label_payloads(
+    request: UpdateLabelPayloadsRequest,
+) -> responses.JSONResponse:
+    util.update_label_payloads(
+        request.project_id,
+        request.embedding_ids,
         request.record_ids,
     )
     return responses.PlainTextResponse(status_code=status.HTTP_200_OK)

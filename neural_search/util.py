@@ -6,8 +6,12 @@ from scipy.spatial.distance import cdist
 from typing import Any, Tuple, Union, List, Optional, Dict
 from fastapi import status
 
-from submodules.model.business_objects import embedding, record_label_association
-from submodules.model.enums import EmbeddingPlatform
+from submodules.model.business_objects import (
+    embedding,
+    record_label_association,
+    record,
+)
+from submodules.model.enums import EmbeddingPlatform, LabelSource
 
 from .similarity_threshold import SimilarityThreshold
 
@@ -279,7 +283,7 @@ def detect_outliers(
     return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
 
 
-def update_payloads(
+def update_attribute_payloads(
     project_id: str,
     embedding_id: str,
     record_ids: Optional[List[str]],
@@ -287,6 +291,11 @@ def update_payloads(
     has_sub_key = embedding.has_sub_key(project_id, embedding_id)
     filter_attribute_dict = embedding.get_filter_attribute_type_dict(
         project_id, embedding_id
+    )
+    label_payload_extension = record_label_association.get_label_payload_for_qdrant(
+        project_id,
+        source_type=[LabelSource.MANUAL.value, LabelSource.WEAK_SUPERVISION.value],
+        record_ids=record_ids,
     )
 
     if has_sub_key:
@@ -302,7 +311,11 @@ def update_payloads(
 
     update_operations = []
     for record_id, payload in zip(ids_for_storage, payloads):
+        if record_id in label_payload_extension:
+            payload["labels"] = label_payload_extension[record_id]
         update_operations.append(
+            # use overwrite payload operation so that existing attributes in payload are
+            # removed if not present in new payload but therefore we need to add the labels
             models.OverwritePayloadOperation(
                 overwrite_payload=models.SetPayload(
                     payload=payload,
@@ -310,6 +323,56 @@ def update_payloads(
                 )
             )
         )
+
+    qdrant_client.batch_update_points(
+        collection_name=embedding_id,
+        update_operations=update_operations,
+    )
+
+
+def update_label_payloads(
+    project_id: str, embedding_ids: List[str], record_ids: Optional[List[str]] = None
+) -> None:
+    label_payload_extension = record_label_association.get_label_payload_for_qdrant(
+        project_id,
+        source_type=[LabelSource.MANUAL.value, LabelSource.WEAK_SUPERVISION.value],
+        record_ids=record_ids,
+    )
+
+    update_operations = []
+    for embedding_id in embedding_ids:
+        has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+
+        if has_sub_key:
+            ids_for_storage = embedding.get_tensor_ids_by_embedding_id(
+                embedding_id, record_ids
+            )
+        else:
+            if record_ids is None:
+                ids_for_storage = record.get_all_ids(project_id)
+            else:
+                ids_for_storage = record_ids
+
+        for record_id in ids_for_storage:
+            if record_id in label_payload_extension:
+                payload = {"labels": label_payload_extension[record_id]}
+                update_operations.append(
+                    models.SetPayloadOperation(
+                        set_payload=models.SetPayload(
+                            payload=payload,
+                            points=[record_id],
+                        )
+                    )
+                )
+            else:
+                update_operations.append(
+                    models.DeletePayloadOperation(
+                        delete_payload=models.DeletePayload(
+                            keys=["labels"],
+                            points=[record_id],
+                        )
+                    )
+                )
 
     qdrant_client.batch_update_points(
         collection_name=embedding_id,
