@@ -16,7 +16,7 @@ from submodules.model.enums import EmbeddingPlatform, LabelSource
 from .similarity_threshold import SimilarityThreshold
 
 port = int(os.environ["QDRANT_PORT"])
-qdrant_client = QdrantClient(host="qdrant", port=port)
+qdrant_client = QdrantClient(host="qdrant", port=port, timeout=60)
 
 sim_thr = SimilarityThreshold(qdrant_client)
 
@@ -302,24 +302,28 @@ def update_attribute_payloads(
         all_object = embedding.get_tensors_and_attributes_for_qdrant(
             project_id, embedding_id, filter_attribute_dict, record_ids, True
         )
-        _, payloads, ids_for_storage = zip(*all_object)
+        record_ids, payloads, tensor_ids = zip(*all_object)
+        ids_for_storage = tensor_ids
     else:
         all_object = embedding.get_attributes_for_qdrant(
             project_id, record_ids, filter_attribute_dict
         )
-        ids_for_storage, payloads = zip(*all_object)
+        record_ids, payloads = zip(*all_object)
+        ids_for_storage = record_ids
 
-    update_operations = []
-    for record_id, payload in zip(ids_for_storage, payloads):
+    for record_id, payload in zip(record_ids, payloads):
         if record_id in label_payload_extension:
             payload["labels"] = label_payload_extension[record_id]
+
+    update_operations = []
+    for point_id, payload in zip(ids_for_storage, payloads):
         update_operations.append(
             # use overwrite payload operation so that existing attributes in payload are
             # removed if not present in new payload but therefore we need to add the labels
             models.OverwritePayloadOperation(
                 overwrite_payload=models.SetPayload(
                     payload=payload,
-                    points=[record_id],
+                    points=[point_id],
                 )
             )
         )
@@ -339,28 +343,37 @@ def update_label_payloads(
         record_ids=record_ids,
     )
 
-    update_operations = []
     for embedding_id in embedding_ids:
         has_sub_key = embedding.has_sub_key(project_id, embedding_id)
-
         if has_sub_key:
-            ids_for_storage = embedding.get_tensor_ids_by_embedding_id(
-                embedding_id, record_ids
+            tensor_ids, record_ids = zip(
+                *embedding.get_tensor_ids_and_record_ids_by_embedding_id(
+                    embedding_id, record_ids
+                )
             )
+            ids_for_storage = tensor_ids
         else:
             if record_ids is None:
-                ids_for_storage = record.get_all_ids(project_id)
+                record_ids = record.get_all_ids(project_id)
+                ids_for_storage = record_ids
             else:
                 ids_for_storage = record_ids
 
-        for record_id in ids_for_storage:
+        payloads = []
+        for record_id in record_ids:
             if record_id in label_payload_extension:
-                payload = {"labels": label_payload_extension[record_id]}
+                payloads.append({"labels": label_payload_extension[record_id]})
+            else:
+                payloads.append(None)
+
+        update_operations = []
+        for point_id, payload in zip(ids_for_storage, payloads):
+            if payload is not None:
                 update_operations.append(
                     models.SetPayloadOperation(
                         set_payload=models.SetPayload(
                             payload=payload,
-                            points=[record_id],
+                            points=[point_id],
                         )
                     )
                 )
@@ -369,12 +382,12 @@ def update_label_payloads(
                     models.DeletePayloadOperation(
                         delete_payload=models.DeletePayload(
                             keys=["labels"],
-                            points=[record_id],
+                            points=[point_id],
                         )
                     )
                 )
 
-    qdrant_client.batch_update_points(
-        collection_name=embedding_id,
-        update_operations=update_operations,
-    )
+        qdrant_client.batch_update_points(
+            collection_name=embedding_id,
+            update_operations=update_operations,
+        )
