@@ -144,7 +144,7 @@ class UpdateAttributePayloadsRequest(BaseModel):
 @app.post("/update_attribute_payloads")
 def update_attribute_payloads(
     request: UpdateAttributePayloadsRequest,
-) -> responses.JSONResponse:
+) -> responses.PlainTextResponse:
     util.update_attribute_payloads(
         request.project_id,
         request.embedding_id,
@@ -162,7 +162,7 @@ class UpdateLabelPayloadsRequest(BaseModel):
 @app.post("/update_label_payloads")
 def update_label_payloads(
     request: UpdateLabelPayloadsRequest,
-) -> responses.JSONResponse:
+) -> responses.PlainTextResponse:
     util.update_label_payloads(
         request.project_id,
         request.embedding_ids,

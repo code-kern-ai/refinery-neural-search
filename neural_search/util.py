@@ -315,18 +315,17 @@ def update_attribute_payloads(
         if record_id in label_payload_extension:
             payload["labels"] = label_payload_extension[record_id]
 
-    update_operations = []
-    for point_id, payload in zip(ids_for_storage, payloads):
-        update_operations.append(
-            # use overwrite payload operation so that existing attributes in payload are
-            # removed if not present in new payload but therefore we need to add the labels
-            models.OverwritePayloadOperation(
-                overwrite_payload=models.SetPayload(
-                    payload=payload,
-                    points=[point_id],
-                )
+    update_operations = [
+        # use overwrite payload operation so that existing attributes in payload are
+        # removed if not present in new payload but therefore we need to add the labels
+        models.OverwritePayloadOperation(
+            overwrite_payload=models.SetPayload(
+                payload=payload,
+                points=[point_id],
             )
         )
+        for point_id, payload in zip(ids_for_storage, payloads)
+    ]
 
     qdrant_client.batch_update_points(
         collection_name=embedding_id,
