@@ -22,6 +22,8 @@ sim_thr = SimilarityThreshold(qdrant_client)
 
 missing_collections_creation_in_progress = False
 
+LABELS_QDRANT = "@@labels@@"
+
 
 def most_similar(
     project_id: str,
@@ -103,7 +105,7 @@ def __is_label_filter(key: str) -> bool:
     parts = key.split(".")
     if len(parts) == 1:
         return False
-    return parts[0] == "labels"
+    return parts[0] == LABELS_QDRANT
 
 
 def __build_filter(att_filter: List[Dict[str, Any]]) -> models.Filter:
@@ -178,7 +180,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
 
     for record_id, payload in zip(record_ids, payloads):
         if record_id in label_payload_extension:
-            payload["labels"] = label_payload_extension[record_id]
+            payload[LABELS_QDRANT] = label_payload_extension[record_id]
 
     id_for_storage = None
     if has_sub_key:
@@ -313,7 +315,7 @@ def update_attribute_payloads(
 
     for record_id, payload in zip(record_ids, payloads):
         if record_id in label_payload_extension:
-            payload["labels"] = label_payload_extension[record_id]
+            payload[LABELS_QDRANT] = label_payload_extension[record_id]
 
     update_operations = [
         # use overwrite payload operation so that existing attributes in payload are
@@ -361,7 +363,7 @@ def update_label_payloads(
         payloads = []
         for record_id in record_ids:
             if record_id in label_payload_extension:
-                payloads.append({"labels": label_payload_extension[record_id]})
+                payloads.append({LABELS_QDRANT: label_payload_extension[record_id]})
             else:
                 payloads.append(None)
 
@@ -380,7 +382,7 @@ def update_label_payloads(
                 update_operations.append(
                     models.DeletePayloadOperation(
                         delete_payload=models.DeletePayload(
-                            keys=["labels"],
+                            keys=[LABELS_QDRANT],
                             points=[point_id],
                         )
                     )
