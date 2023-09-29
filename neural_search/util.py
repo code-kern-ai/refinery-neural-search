@@ -6,17 +6,23 @@ from scipy.spatial.distance import cdist
 from typing import Any, Tuple, Union, List, Optional, Dict
 from fastapi import status
 
-from submodules.model.business_objects import embedding
-from submodules.model.enums import EmbeddingPlatform
+from submodules.model.business_objects import (
+    embedding,
+    record_label_association,
+    record,
+)
+from submodules.model.enums import EmbeddingPlatform, LabelSource
 
 from .similarity_threshold import SimilarityThreshold
 
 port = int(os.environ["QDRANT_PORT"])
-qdrant_client = QdrantClient(host="qdrant", port=port)
+qdrant_client = QdrantClient(host="qdrant", port=port, timeout=60)
 
 sim_thr = SimilarityThreshold(qdrant_client)
 
 missing_collections_creation_in_progress = False
+
+LABELS_QDRANT = "@@labels@@"
 
 
 def most_similar(
@@ -70,6 +76,7 @@ def most_similar_by_embedding(
         return []
 
     ids = [result.id for result in search_result]
+
     return embedding.get_match_record_ids_to_qdrant_ids(
         project_id, embedding_id, ids, limit
     )
@@ -85,13 +92,20 @@ def is_filter_valid_for_embedding(
 
     embedding_item = embedding.get(project_id, embedding_id)
     filter_attributes = embedding_item.filter_attributes
-    if not filter_attributes:
-        return False
     for filter_attribute in att_filter:
-        if filter_attribute["key"] not in filter_attributes:
+        if filter_attribute["key"] not in filter_attributes and not __is_label_filter(
+            filter_attribute["key"]
+        ):
             return False
 
     return True
+
+
+def __is_label_filter(key: str) -> bool:
+    parts = key.split(".")
+    if len(parts) == 1:
+        return False
+    return parts[0] == LABELS_QDRANT
 
 
 def __build_filter(att_filter: List[Dict[str, Any]]) -> models.Filter:
@@ -136,7 +150,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
         project_id, embedding_id, filter_attribute_dict
     )
     # note embedding lists use tensor id, others use record ids
-    ids, embeddings, payloads = zip(*all_object)
+    record_ids, embeddings, payloads, tensor_ids = zip(*all_object)
     if len(embeddings) == 0:
         return status.HTTP_404_NOT_FOUND
     vector_size = 0
@@ -157,19 +171,27 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     ):
         embeddings = [[float(e) for e in embedding] for embedding in embeddings]
 
-    if len(payloads) > 0 and payloads[0] is None:
-        records = [
-            models.Record(
-                id=id,
-                vector=embedding,
-            )
-            for id, embedding in zip(ids, embeddings)
-        ]
+    # extend payloads
+    label_payload_extension = record_label_association.get_label_payload_for_qdrant(
+        project_id
+    )
+
+    has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+
+    for record_id, payload in zip(record_ids, payloads):
+        if record_id in label_payload_extension:
+            payload[LABELS_QDRANT] = label_payload_extension[record_id]
+
+    id_for_storage = None
+    if has_sub_key:
+        id_for_storage = tensor_ids
     else:
-        records = [
-            models.Record(id=id, vector=e, payload=payload)
-            for id, e, payload in zip(ids, embeddings, payloads)
-        ]
+        id_for_storage = record_ids
+
+    records = [
+        models.Record(id=id, vector=e, payload=payload)
+        for id, e, payload in zip(id_for_storage, embeddings, payloads)
+    ]
 
     qdrant_client.upload_records(collection_name=embedding_id, records=records)
     sim_thr.calculate_threshold(project_id, embedding_id)
@@ -261,3 +283,112 @@ def detect_outliers(
     outlier_scores = outlier_scores[sorted_index[:max_records]]
 
     return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
+
+
+def update_attribute_payloads(
+    project_id: str,
+    embedding_id: str,
+    record_ids: Optional[List[str]],
+) -> None:
+    has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+    filter_attribute_dict = embedding.get_filter_attribute_type_dict(
+        project_id, embedding_id
+    )
+    label_payload_extension = record_label_association.get_label_payload_for_qdrant(
+        project_id,
+        source_type=[LabelSource.MANUAL.value, LabelSource.WEAK_SUPERVISION.value],
+        record_ids=record_ids,
+    )
+
+    if has_sub_key:
+        all_object = embedding.get_tensors_and_attributes_for_qdrant(
+            project_id, embedding_id, filter_attribute_dict, record_ids, True
+        )
+        record_ids, payloads, tensor_ids = zip(*all_object)
+        ids_for_storage = tensor_ids
+    else:
+        all_object = embedding.get_attributes_for_qdrant(
+            project_id, record_ids, filter_attribute_dict
+        )
+        record_ids, payloads = zip(*all_object)
+        ids_for_storage = record_ids
+
+    for record_id, payload in zip(record_ids, payloads):
+        if record_id in label_payload_extension:
+            payload[LABELS_QDRANT] = label_payload_extension[record_id]
+
+    update_operations = [
+        # use overwrite payload operation so that existing attributes in payload are
+        # removed if not present in new payload but therefore we need to add the labels
+        models.OverwritePayloadOperation(
+            overwrite_payload=models.SetPayload(
+                payload=payload,
+                points=[point_id],
+            )
+        )
+        for point_id, payload in zip(ids_for_storage, payloads)
+    ]
+
+    qdrant_client.batch_update_points(
+        collection_name=embedding_id,
+        update_operations=update_operations,
+    )
+
+
+def update_label_payloads(
+    project_id: str, embedding_ids: List[str], record_ids: Optional[List[str]] = None
+) -> None:
+    label_payload_extension = record_label_association.get_label_payload_for_qdrant(
+        project_id,
+        source_type=[LabelSource.MANUAL.value, LabelSource.WEAK_SUPERVISION.value],
+        record_ids=record_ids,
+    )
+
+    for embedding_id in embedding_ids:
+        has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+        if has_sub_key:
+            tensor_ids, record_ids = zip(
+                *embedding.get_tensor_ids_and_record_ids_by_embedding_id(
+                    embedding_id, record_ids
+                )
+            )
+            ids_for_storage = tensor_ids
+        else:
+            if record_ids is None:
+                record_ids = record.get_all_ids(project_id)
+                ids_for_storage = record_ids
+            else:
+                ids_for_storage = record_ids
+
+        payloads = []
+        for record_id in record_ids:
+            if record_id in label_payload_extension:
+                payloads.append({LABELS_QDRANT: label_payload_extension[record_id]})
+            else:
+                payloads.append(None)
+
+        update_operations = []
+        for point_id, payload in zip(ids_for_storage, payloads):
+            if payload is not None:
+                update_operations.append(
+                    models.SetPayloadOperation(
+                        set_payload=models.SetPayload(
+                            payload=payload,
+                            points=[point_id],
+                        )
+                    )
+                )
+            else:
+                update_operations.append(
+                    models.DeletePayloadOperation(
+                        delete_payload=models.DeletePayload(
+                            keys=[LABELS_QDRANT],
+                            points=[point_id],
+                        )
+                    )
+                )
+
+        qdrant_client.batch_update_points(
+            collection_name=embedding_id,
+            update_operations=update_operations,
+        )
