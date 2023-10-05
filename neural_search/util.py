@@ -251,23 +251,24 @@ def delete_collection(embedding_id: str):
 def detect_outliers(
     project_id: str, embedding_id: str, limit: int = 100
 ) -> Tuple[int, Union[List[Any], str]]:
-    labeled_tensors = embedding.get_manually_labeled_tensors_by_embedding_id(
-        project_id, embedding_id
-    )
-    labeled_ids, labeled_embeddings = zip(*labeled_tensors)
-    labeled_embeddings = np.array(labeled_embeddings)
-
-    if len(labeled_ids) < 1:
-        return (
-            status.HTTP_412_PRECONDITION_FAILED,
-            "At least one record must be labeled manually to create outlier slice.",
-        )
-
     unlabeled_tensors = embedding.get_not_manually_labeled_tensors_by_embedding_id(
         project_id, embedding_id
     )
+    if len(unlabeled_tensors) < 1:
+        return status.HTTP_200_OK, [[], []]
+
     unlabeled_ids, unlabeled_embeddings = zip(*unlabeled_tensors)
     unlabeled_embeddings = np.array(unlabeled_embeddings)
+
+    labeled_tensors = embedding.get_manually_labeled_tensors_by_embedding_id(
+        project_id, embedding_id
+    )
+
+    if len(labeled_tensors) < 1:
+        labeled_embeddings = np.mean(unlabeled_embeddings, axis=0, keepdims=True)
+    else:
+        _, labeled_embeddings = zip(*labeled_tensors)
+        labeled_embeddings = np.array(labeled_embeddings)
 
     outlier_scores = np.sum(
         cdist(labeled_embeddings, unlabeled_embeddings, "euclidean"), axis=0
