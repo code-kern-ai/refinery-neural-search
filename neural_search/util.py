@@ -252,7 +252,7 @@ def detect_outliers(
     project_id: str, embedding_id: str, limit: int = 100
 ) -> Tuple[int, Union[List[Any], str]]:
     unlabeled_tensors = embedding.get_not_manually_labeled_tensors_by_embedding_id(
-        project_id, embedding_id
+        project_id, embedding_id, 10000
     )
     if len(unlabeled_tensors) < 1:
         return status.HTTP_200_OK, [[], []]
@@ -261,7 +261,7 @@ def detect_outliers(
     unlabeled_embeddings = np.array(unlabeled_embeddings)
 
     labeled_tensors = embedding.get_manually_labeled_tensors_by_embedding_id(
-        project_id, embedding_id
+        project_id, embedding_id, 10000
     )
 
     if len(labeled_tensors) < 1:
