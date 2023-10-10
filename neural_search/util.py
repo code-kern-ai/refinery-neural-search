@@ -278,12 +278,20 @@ def detect_outliers(
         axis=None,
     )[::-1]
 
-    max_records = min(round(0.05 * len(sorted_index)), limit)
+    count_unlabeled = record.count_records_without_manual_label(project_id)
+    max_records = min(round(0.05 * count_unlabeled), limit)
 
-    outlier_ids = np.array(unlabeled_ids)[sorted_index[:max_records]]
-    outlier_scores = outlier_scores[sorted_index[:max_records]]
+    i = 0
+    outlier_slice_ids = []
+    outlier_slics_scores = []
+    while len(outlier_slice_ids) < max_records and i < len(sorted_index):
+        outlier_id = unlabeled_ids[sorted_index[i]]
+        if outlier_id not in outlier_slice_ids:
+            outlier_slice_ids.append(outlier_id)
+            outlier_slics_scores.append(outlier_scores[sorted_index[i]])
+        i += 1
 
-    return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
+    return status.HTTP_200_OK, [outlier_slice_ids, outlier_slics_scores]
 
 
 def update_attribute_payloads(
