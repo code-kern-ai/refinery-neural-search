@@ -251,23 +251,24 @@ def delete_collection(embedding_id: str):
 def detect_outliers(
     project_id: str, embedding_id: str, limit: int = 100
 ) -> Tuple[int, Union[List[Any], str]]:
-    labeled_tensors = embedding.get_manually_labeled_tensors_by_embedding_id(
-        project_id, embedding_id
-    )
-    labeled_ids, labeled_embeddings = zip(*labeled_tensors)
-    labeled_embeddings = np.array(labeled_embeddings)
-
-    if len(labeled_ids) < 1:
-        return (
-            status.HTTP_412_PRECONDITION_FAILED,
-            "At least one record must be labeled manually to create outlier slice.",
-        )
-
     unlabeled_tensors = embedding.get_not_manually_labeled_tensors_by_embedding_id(
-        project_id, embedding_id
+        project_id, embedding_id, 10000
     )
+    if len(unlabeled_tensors) < 1:
+        return status.HTTP_200_OK, [[], []]
+
     unlabeled_ids, unlabeled_embeddings = zip(*unlabeled_tensors)
     unlabeled_embeddings = np.array(unlabeled_embeddings)
+
+    labeled_tensors = embedding.get_manually_labeled_tensors_by_embedding_id(
+        project_id, embedding_id, 10000
+    )
+
+    if len(labeled_tensors) < 1:
+        labeled_embeddings = np.mean(unlabeled_embeddings, axis=0, keepdims=True)
+    else:
+        _, labeled_embeddings = zip(*labeled_tensors)
+        labeled_embeddings = np.array(labeled_embeddings)
 
     outlier_scores = np.sum(
         cdist(labeled_embeddings, unlabeled_embeddings, "euclidean"), axis=0
@@ -277,12 +278,20 @@ def detect_outliers(
         axis=None,
     )[::-1]
 
-    max_records = min(round(0.05 * len(sorted_index)), limit)
+    count_unlabeled = record.count_records_without_manual_label(project_id)
+    max_records = min(round(0.05 * count_unlabeled), limit)
 
-    outlier_ids = np.array(unlabeled_ids)[sorted_index[:max_records]]
-    outlier_scores = outlier_scores[sorted_index[:max_records]]
+    i = 0
+    outlier_slice_ids = []
+    outlier_slics_scores = []
+    while len(outlier_slice_ids) < max_records and i < len(sorted_index):
+        outlier_id = unlabeled_ids[sorted_index[i]]
+        if outlier_id not in outlier_slice_ids:
+            outlier_slice_ids.append(outlier_id)
+            outlier_slics_scores.append(outlier_scores[sorted_index[i]])
+        i += 1
 
-    return status.HTTP_200_OK, [outlier_ids.tolist(), outlier_scores.tolist()]
+    return status.HTTP_200_OK, [outlier_slice_ids, outlier_slics_scores]
 
 
 def update_attribute_payloads(
