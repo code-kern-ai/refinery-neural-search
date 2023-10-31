@@ -6,6 +6,7 @@
 #
 anyio==4.0.0
     # via
+    #   -r requirements/common-requirements.txt
     #   httpcore
     #   starlette
 boto3==1.25.0
@@ -44,6 +45,7 @@ grpcio-tools==1.58.0
     # via qdrant-client
 h11==0.14.0
     # via
+    #   -r requirements/common-requirements.txt
     #   httpcore
     #   uvicorn
 h2==4.1.0
@@ -128,7 +130,7 @@ typing-extensions==4.7.1
     #   -r requirements/common-requirements.txt
     #   pydantic
     #   starlette
-urllib3==1.26.16
+urllib3==1.26.18
     # via
     #   -r requirements/common-requirements.txt
     #   botocore
