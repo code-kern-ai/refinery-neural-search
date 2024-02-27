@@ -1,11 +1,22 @@
 # -*- coding: utf-8 -*-
-from fastapi import FastAPI, responses, status
+from fastapi import FastAPI, responses, status, Request
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any, Union
 from neural_search import util
 from submodules.model.business_objects import general
 
 app = FastAPI()
+
+
+@app.middleware("http")
+async def handle_db_session(request: Request, call_next):
+    session_token = general.get_ctx_token()
+    try:
+        response = await call_next(request)
+    finally:
+        general.remove_and_refresh_session(session_token)
+
+    return response
 
 
 @app.post("/most_similar")
@@ -34,11 +45,9 @@ def most_similar(
     Returns:
         JSONResponse: containing HTML status code and the n most similar records
     """
-    session_token = general.get_ctx_token()
     similar_records = util.most_similar(
         project_id, embedding_id, record_id, limit, att_filter, record_sub_key
     )
-    general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
         content=similar_records,
@@ -74,7 +83,6 @@ def most_similar_by_embedding(
     Returns:
         JSONResponse: containing HTML status code and the n most similar records
     """
-    session_token = general.get_ctx_token()
     if isinstance(request.threshold, int):
         request.threshold = float(request.threshold)
     similar_records = util.most_similar_by_embedding(
@@ -85,7 +93,6 @@ def most_similar_by_embedding(
         request.att_filter,
         request.threshold,
     )
-    general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
         content=similar_records,
@@ -103,9 +110,7 @@ def recreate_collection(
     Returns:
         JSONResponse: html status code
     """
-    session_token = general.get_ctx_token()
     status_code = util.recreate_collection(project_id, embedding_id)
-    general.remove_and_refresh_session(session_token)
     return responses.PlainTextResponse(status_code=status_code)
 
 
@@ -129,9 +134,7 @@ def create_missing_collections() -> responses.JSONResponse:
     Returns:
         JSONResponse: html status code
     """
-    session_token = general.get_ctx_token()
     status_code, content = util.create_missing_collections()
-    general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(status_code=status_code, content=content)
 
 
@@ -197,11 +200,9 @@ def detect_outliers(
         embedding_id (str): Embedding id.
         limit (int): Specifies the maximum amount of returned records.
     Returns:
-        JSONResponse: html status code, if successfull the response the top_n most outlying records.
+        JSONResponse: html status code, if successful the response the top_n most outlying records.
     """
-    session_token = general.get_ctx_token()
     status_code, content = util.detect_outliers(project_id, embedding_id, limit)
-    general.remove_and_refresh_session(session_token)
     return responses.JSONResponse(
         status_code=status_code,
         content=content,
