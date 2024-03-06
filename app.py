@@ -126,6 +126,24 @@ def get_collections() -> responses.JSONResponse:
     return responses.JSONResponse(status_code=status.HTTP_200_OK, content=collections)
 
 
+@app.get("/collection/exist")
+def collection_exists(
+    project_id: str, embedding_id: str, include_db_check: bool = False
+) -> responses.JSONResponse:
+    """
+    Check if a collection exists in Qdrant and optionally in the database.
+
+    Returns:
+        JSONResponse: html status code, exists: bool
+    """
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "exists": util.collection_exists(project_id, embedding_id, include_db_check)
+        },
+    )
+
+
 @app.put("/create_missing_collections")
 def create_missing_collections() -> responses.JSONResponse:
     """
@@ -148,11 +166,17 @@ class UpdateAttributePayloadsRequest(BaseModel):
 def update_attribute_payloads(
     request: UpdateAttributePayloadsRequest,
 ) -> responses.PlainTextResponse:
-    util.update_attribute_payloads(
-        request.project_id,
-        request.embedding_id,
-        request.record_ids,
-    )
+
+    try:
+        util.update_attribute_payloads(
+            request.project_id,
+            request.embedding_id,
+            request.record_ids,
+        )
+    except Exception:
+        return responses.PlainTextResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
     return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
 
 
