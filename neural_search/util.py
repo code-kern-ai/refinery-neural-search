@@ -301,7 +301,9 @@ def update_attribute_payloads(
     project_id: str,
     embedding_id: str,
     record_ids: Optional[List[str]],
-) -> None:
+) -> bool:
+    if not __qdrant_collection_exits(embedding_id):
+        raise ValueError(f"Collection {embedding_id} does not exist.")
     has_sub_key = embedding.has_sub_key(project_id, embedding_id)
     filter_attribute_dict = embedding.get_filter_attribute_type_dict(
         project_id, embedding_id
@@ -404,3 +406,22 @@ def update_label_payloads(
             collection_name=embedding_id,
             update_operations=update_operations,
         )
+
+
+def collection_exists(
+    project_id: str, embedding_id: str, include_db_check: bool
+) -> bool:
+    if not __qdrant_collection_exits(embedding_id):
+        return False
+    if include_db_check and not embedding.get(project_id, embedding_id):
+        return False
+    return True
+
+
+def __qdrant_collection_exits(collection_name: str) -> bool:
+    # to be replaced by qdrant_client.collection_exists(collection_name=collection_name) after qdrant_client update
+    try:
+        qdrant_client.get_collection(collection_name)
+        return True
+    except Exception:
+        return False
