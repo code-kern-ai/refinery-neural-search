@@ -3,4 +3,3 @@
 -r common-requirements.txt
 qdrant-client==1.5.4
 scipy==1.11.2
-pytest==8.1.1
