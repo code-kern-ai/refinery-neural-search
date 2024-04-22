@@ -146,6 +146,9 @@ def __build_filter_item(filter_item: Dict[str, Any]) -> models.FieldCondition:
 
 
 def recreate_collection(project_id: str, embedding_id: str) -> int:
+    embedding_item = embedding.get(project_id, embedding_id)
+    if not embedding_item:
+        return status.HTTP_404_NOT_FOUND
     filter_attribute_dict = embedding.get_filter_attribute_type_dict(
         project_id, embedding_id
     )
@@ -163,7 +166,8 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     qdrant_client.recreate_collection(
         collection_name=embedding_id,
         vectors_config=models.VectorParams(
-            size=vector_size, distance=models.Distance.EUCLID
+            size=vector_size,
+            distance=__get_distance_key(embedding_item.platform, embedding_item.model),
         ),
     )
     records = None
@@ -260,6 +264,8 @@ def detect_outliers(
     if len(unlabeled_tensors) < 1:
         return status.HTTP_200_OK, [[], []]
 
+    embedding_item = embedding.get(project_id, embedding_id)
+
     unlabeled_ids, unlabeled_embeddings = zip(*unlabeled_tensors)
     unlabeled_embeddings = np.array(unlabeled_embeddings)
 
@@ -274,7 +280,12 @@ def detect_outliers(
         labeled_embeddings = np.array(labeled_embeddings)
 
     outlier_scores = np.sum(
-        cdist(labeled_embeddings, unlabeled_embeddings, "euclidean"), axis=0
+        cdist(
+            labeled_embeddings,
+            unlabeled_embeddings,
+            __get_distance_key(embedding_item.platform, embedding_item.model, False),
+        ),
+        axis=0,
     )
     sorted_index = np.argsort(
         outlier_scores,
@@ -425,3 +436,18 @@ def __qdrant_collection_exits(collection_name: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def __get_distance_key(
+    platform: str, model: str, for_qdrant: bool = True
+) -> Union[str, models.Distance]:
+    if for_qdrant:
+        if platform == EmbeddingPlatform.PYTHON.value and model == "tf-idf":
+            if for_qdrant:
+                return models.Distance.COSINE
+            else:
+                return "cosine"
+        if for_qdrant:
+            return models.Distance.EUCLID
+        else:
+            return "euclidean"
