@@ -4,9 +4,6 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from . import util
 from submodules.model.enums import EmbeddingPlatform
-
-# from .util import get_distance_key
-
 from submodules.model.business_objects import embedding
 
 NO_THRESHOLD_INDICATOR = -9999
