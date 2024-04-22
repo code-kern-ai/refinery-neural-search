@@ -167,7 +167,7 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
         collection_name=embedding_id,
         vectors_config=models.VectorParams(
             size=vector_size,
-            distance=__get_distance_key(embedding_item.platform, embedding_item.model),
+            distance=get_distance_key(embedding_item.platform, embedding_item.model),
         ),
     )
     records = None
@@ -283,7 +283,7 @@ def detect_outliers(
         cdist(
             labeled_embeddings,
             unlabeled_embeddings,
-            __get_distance_key(embedding_item.platform, embedding_item.model, False),
+            get_distance_key(embedding_item.platform, embedding_item.model, False),
         ),
         axis=0,
     )
@@ -438,16 +438,15 @@ def __qdrant_collection_exits(collection_name: str) -> bool:
         return False
 
 
-def __get_distance_key(
+def get_distance_key(
     platform: str, model: str, for_qdrant: bool = True
 ) -> Union[str, models.Distance]:
-    if for_qdrant:
-        if platform == EmbeddingPlatform.PYTHON.value and model == "tf-idf":
-            if for_qdrant:
-                return models.Distance.COSINE
-            else:
-                return "cosine"
+    if platform == EmbeddingPlatform.PYTHON.value and model == "tf-idf":
         if for_qdrant:
-            return models.Distance.EUCLID
+            return models.Distance.COSINE
         else:
-            return "euclidean"
+            return "cosine"
+    if for_qdrant:
+        return models.Distance.EUCLID
+    else:
+        return "euclidean"
