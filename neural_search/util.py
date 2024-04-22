@@ -13,7 +13,7 @@ from submodules.model.business_objects import (
 )
 from submodules.model.enums import EmbeddingPlatform, LabelSource
 
-from .similarity_threshold import SimilarityThreshold
+from .similarity_threshold import SimilarityThreshold, NO_THRESHOLD_INDICATOR
 
 port = int(os.environ["QDRANT_PORT"])
 qdrant_client = QdrantClient(host="qdrant", port=port, timeout=60)
@@ -62,7 +62,7 @@ def most_similar_by_embedding(
     similarity_threshold = threshold
     if similarity_threshold is None:
         similarity_threshold = sim_thr.get_threshold(project_id, embedding_id)
-    elif similarity_threshold == -9999:
+    elif similarity_threshold == NO_THRESHOLD_INDICATOR:
         similarity_threshold = None
     try:
         search_result = qdrant_client.search(

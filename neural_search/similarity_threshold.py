@@ -3,10 +3,13 @@ from typing import List
 import numpy as np
 from scipy.spatial.distance import cdist
 from . import util
+from submodules.model.enums import EmbeddingPlatform
 
 # from .util import get_distance_key
 
 from submodules.model.business_objects import embedding
+
+NO_THRESHOLD_INDICATOR = -9999
 
 
 class SimilarityThreshold:
@@ -29,6 +32,9 @@ class SimilarityThreshold:
         threshold = embedding.get(project_id, embedding_id).similarity_threshold
         if threshold is None:
             threshold = self.calculate_threshold(project_id, embedding_id)
+
+        if threshold == NO_THRESHOLD_INDICATOR:
+            return None
         return threshold
 
     def calculate_threshold(
@@ -66,12 +72,17 @@ class SimilarityThreshold:
         Returns:
             List[float]: containing the pairwise distances
         """
-        record_ids = embedding.get_record_ids_by_embedding_id(embedding_id)
         embedding_item = embedding.get(project_id, embedding_id)
+        if (
+            embedding_item.platform == EmbeddingPlatform.PYTHON.value
+            and embedding_item.model == "tf-idf"
+        ):
+            # tf idf embeddings are very similar by default as usually the vectors have a lot of 0s and only very few filled values => threshold doesn't make sense
+            return NO_THRESHOLD_INDICATOR
+        record_ids = embedding.get_record_ids_by_embedding_id(embedding_id)
         distance = util.get_distance_key(
             embedding_item.platform, embedding_item.model, False
         )
-        print(distance, flush=True)
         if len(record_ids) < limit:
             sample_ids = record_ids
         else:
