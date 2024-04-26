@@ -4,7 +4,7 @@ WORKDIR /app
 
 VOLUME ["/app"]
 
-COPY requirements.txt .
+COPY requirements*.txt .
 
 RUN pip3 install --no-cache-dir -r requirements-dev.txt
 
