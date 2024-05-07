@@ -13,7 +13,7 @@ echo -ne 'starting...'
 docker run -d --rm \
 --name refinery-neural-search \
 -p 7063:80 \
--e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+-e POSTGRES=postgresql://postgres:kern@graphql-postgres:5432 \
 -e QDRANT_PORT=6333 \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \

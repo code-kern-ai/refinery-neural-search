@@ -15,16 +15,16 @@ steps:
   - name: build and publish
     image: plugins/docker
     settings:
-      registry: registry.dev.onetask.ai
+      registry: registry.dev.kern.ai
       username:
         from_secret: docker_username
       password:
         from_secret: docker_password
-      repo: "registry.dev.onetask.ai/${DRONE_REPO}"
+      repo: "registry.dev.kern.ai/${DRONE_REPO}"
       tags: ["${DRONE_COMMIT_SHA}", "${DRONE_COMMIT_BRANCH}"]
       cache_from:
-        - "registry.dev.onetask.ai/${DRONE_REPO}:dev"
-        - "registry.dev.onetask.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}"
+        - "registry.dev.kern.ai/${DRONE_REPO}:dev"
+        - "registry.dev.kern.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}"
 
 trigger:
   event:
@@ -42,7 +42,7 @@ steps:
   - name: trigger update
     image: appleboy/drone-ssh
     settings:
-      host: app.dev.onetask.ai
+      host: app.dev.kern.ai
       username:
         from_secret: ssh_user
       key:
@@ -79,16 +79,16 @@ steps:
   - name: build and publish
     image: plugins/docker
     settings:
-      registry: registry.dev.onetask.ai
+      registry: registry.dev.kern.ai
       username:
         from_secret: docker_username
       password:
         from_secret: docker_password
-      repo: "registry.dev.onetask.ai/${DRONE_REPO}"
+      repo: "registry.dev.kern.ai/${DRONE_REPO}"
       tags: ["${DRONE_COMMIT_SHA}_arm64", "${DRONE_COMMIT_BRANCH}_arm64"]
       cache_from:
-        - "registry.dev.onetask.ai/${DRONE_REPO}:dev_arm64"
-        - "registry.dev.onetask.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}_arm64"
+        - "registry.dev.kern.ai/${DRONE_REPO}:dev_arm64"
+        - "registry.dev.kern.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}_arm64"
 
 trigger:
   branch:
