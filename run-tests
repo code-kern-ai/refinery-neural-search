@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker exec -it refinery-neural-search bash -c "cd /app && python -m pytest -v"
