@@ -2,8 +2,11 @@ import random
 from typing import List
 import numpy as np
 from scipy.spatial.distance import cdist
-
+from . import util
+from submodules.model.enums import EmbeddingPlatform
 from submodules.model.business_objects import embedding
+
+NO_THRESHOLD_INDICATOR = -9999
 
 
 class SimilarityThreshold:
@@ -26,6 +29,9 @@ class SimilarityThreshold:
         threshold = embedding.get(project_id, embedding_id).similarity_threshold
         if threshold is None:
             threshold = self.calculate_threshold(project_id, embedding_id)
+
+        if threshold == [NO_THRESHOLD_INDICATOR]:
+            return None
         return threshold
 
     def calculate_threshold(
@@ -44,7 +50,7 @@ class SimilarityThreshold:
             percentile (int): percentile which should be used to define the threshold.
             limit (int): maximum numbers of records in sample.
         """
-        scores = self.get_scores(embedding_id, limit)
+        scores = self.get_scores(project_id, embedding_id, limit)
         threshold = np.percentile(scores, percentile)
         embedding.update_similarity_threshold(
             project_id, embedding_id, threshold, with_commit=True
@@ -52,7 +58,7 @@ class SimilarityThreshold:
         return threshold
 
     def get_scores(
-        self, embedding_id: str, limit: int = 500, distance: str = "euclidean"
+        self, project_id: str, embedding_id: str, limit: int = 500
     ) -> List[float]:
         """
         Calculates the pairwise distances for a sub sample of the embedding's records.
@@ -63,8 +69,17 @@ class SimilarityThreshold:
         Returns:
             List[float]: containing the pairwise distances
         """
+        embedding_item = embedding.get(project_id, embedding_id)
+        if (
+            embedding_item.platform == EmbeddingPlatform.PYTHON.value
+            and embedding_item.model == "tf-idf"
+        ):
+            # tf idf embeddings are very similar by default as usually the vectors have a lot of 0s and only very few filled values => threshold doesn't make sense
+            return [NO_THRESHOLD_INDICATOR]
         record_ids = embedding.get_record_ids_by_embedding_id(embedding_id)
-
+        distance = util.get_distance_key(
+            embedding_item.platform, embedding_item.model, False
+        )
         if len(record_ids) < limit:
             sample_ids = record_ids
         else:
