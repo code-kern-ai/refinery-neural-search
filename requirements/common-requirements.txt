@@ -5,10 +5,7 @@
 #    pip-compile common-requirements.in
 #
 anyio==4.4.0
-    # via
-    #   httpx
-    #   starlette
-    #   watchfiles
+    # via starlette
 boto3==1.25.0
     # via -r common-requirements.in
 botocore==1.28.5
@@ -17,62 +14,32 @@ botocore==1.28.5
     #   s3transfer
 certifi==2024.6.2
     # via
-    #   httpcore
-    #   httpx
     #   minio
     #   requests
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
-    # via
-    #   typer
-    #   uvicorn
-dnspython==2.6.1
-    # via email-validator
-email-validator==2.1.1
-    # via fastapi
+    # via uvicorn
 exceptiongroup==1.2.1
     # via anyio
-fastapi==0.111.0
+fastapi==0.110.3
     # via -r mini-requirements.in
-fastapi-cli==0.0.4
-    # via fastapi
 h11==0.14.0
-    # via
-    #   httpcore
-    #   uvicorn
-httpcore==1.0.5
-    # via httpx
-httptools==0.6.1
     # via uvicorn
-httpx==0.27.0
-    # via fastapi
 idna==3.7
     # via
     #   anyio
-    #   email-validator
-    #   httpx
     #   requests
-jinja2==3.1.4
-    # via fastapi
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-markdown-it-py==3.0.0
-    # via rich
-markupsafe==2.1.5
-    # via jinja2
-mdurl==0.1.2
-    # via markdown-it-py
 minio==7.1.12
     # via -r common-requirements.in
 numpy==1.23.4
     # via
     #   -r common-requirements.in
     #   pandas
-orjson==3.10.3
-    # via fastapi
 pandas==1.5.1
     # via -r common-requirements.in
 psycopg2-binary==2.9.9
@@ -81,61 +48,34 @@ pydantic==1.10.13
     # via
     #   -r mini-requirements.in
     #   fastapi
-pygments==2.18.0
-    # via rich
 python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   pandas
-python-dotenv==1.0.1
-    # via uvicorn
-python-multipart==0.0.9
-    # via fastapi
 pytz==2024.1
     # via pandas
-pyyaml==6.0.1
-    # via uvicorn
 requests==2.32.0
     # via -r mini-requirements.in
-rich==13.7.1
-    # via typer
 s3transfer==0.6.2
     # via boto3
-shellingham==1.5.4
-    # via typer
 six==1.16.0
     # via python-dateutil
 sniffio==1.3.1
-    # via
-    #   anyio
-    #   httpx
+    # via anyio
 sqlalchemy==1.4.42
     # via -r common-requirements.in
 starlette==0.37.2
     # via fastapi
-typer==0.12.3
-    # via fastapi-cli
 typing-extensions==4.12.1
     # via
     #   anyio
     #   fastapi
     #   pydantic
     #   starlette
-    #   typer
-ujson==5.10.0
-    # via fastapi
 urllib3==1.26.18
     # via
     #   botocore
     #   minio
     #   requests
-uvicorn[standard]==0.22.0
-    # via
-    #   -r mini-requirements.in
-    #   fastapi
-uvloop==0.19.0
-    # via uvicorn
-watchfiles==0.22.0
-    # via uvicorn
-websockets==12.0
-    # via uvicorn
+uvicorn==0.22.0
+    # via -r mini-requirements.in
