@@ -101,7 +101,7 @@ pytz==2024.1
     #   pandas
 qdrant-client==1.5.4
     # via -r requirements/requirements.in
-requests==2.32.0
+requests==2.32.3
     # via -r requirements/common-requirements.txt
 s3transfer==0.6.2
     # via
