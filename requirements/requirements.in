@@ -3,3 +3,4 @@
 -r common-requirements.txt
 qdrant-client==1.5.4
 scipy==1.11.2
+pydantic==2.7.4
