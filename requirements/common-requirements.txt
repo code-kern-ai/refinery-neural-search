@@ -44,7 +44,7 @@ pandas==1.5.1
     # via -r common-requirements.in
 psycopg2-binary==2.9.9
     # via -r common-requirements.in
-pydantic==1.10.13
+#pydantic==1.10.13
     # via
     #   -r mini-requirements.in
     #   fastapi
