@@ -1,0 +1,15 @@
+name: 'ACR: Docker Push'
+
+on:
+  workflow_dispatch:
+  
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+    
+jobs: 
+  call-az-acr-push:
+    uses: code-kern-ai/cicd-deployment-scripts/.github/workflows/az_acr_push.yml@dev
+    secrets: inherit
