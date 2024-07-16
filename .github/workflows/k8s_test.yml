@@ -1,0 +1,19 @@
+name: 'K8: Test'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Special permissions required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+
+jobs:
+  call-k8-test:
+    uses: code-kern-ai/cicd-deployment-scripts/.github/workflows/k8s_test.yml@dev
+    secrets: inherit
+    with:
+      test_cmd: 'pytest'

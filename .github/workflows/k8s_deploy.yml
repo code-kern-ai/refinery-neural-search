@@ -1,0 +1,22 @@
+name: 'K8: Prepare Deployment' # rename
+
+on:
+  # workflow_dispatch:
+  release:
+    types: [prereleased]
+  pull_request:
+    branches:
+      - dev
+    types: [closed]
+
+# Special permissions required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+jobs:
+  call-k8-release:
+    uses: code-kern-ai/cicd-deployment-scripts/.github/workflows/k8s_release.yml@dev
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged || github.event_name == 'release'
+    secrets: inherit
