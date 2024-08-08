@@ -65,7 +65,7 @@ class MostSimilarByEmbeddingRequest(BaseModel):
 
 @app.post("/most_similar_by_embedding")
 def most_similar_by_embedding(
-    request: MostSimilarByEmbeddingRequest,
+    request: MostSimilarByEmbeddingRequest, include_scores: bool = False
 ) -> responses.JSONResponse:
     """Find the n most similar records with respect to the specified embedding.
         Args:
@@ -92,6 +92,7 @@ def most_similar_by_embedding(
         request.limit,
         request.att_filter,
         request.threshold,
+        include_scores,
     )
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
