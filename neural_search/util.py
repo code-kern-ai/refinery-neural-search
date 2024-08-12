@@ -47,6 +47,7 @@ def most_similar_by_embedding(
     limit: int,
     att_filter: Optional[List[Dict[str, Any]]] = None,
     threshold: Optional[float] = None,
+    include_scores: bool = False,
 ) -> List[str]:
     if not is_filter_valid_for_embedding(project_id, embedding_id, att_filter):
         return []
@@ -75,8 +76,14 @@ def most_similar_by_embedding(
     except Exception:
         return []
 
-    ids = [result.id for result in search_result]
+    if include_scores:
+        # returns a dict with id & score key
+        return embedding.get_match_record_ids_to_qdrant_ids_with_max_score(
+            project_id, embedding_id, search_result, limit
+        )
 
+    ids = [result.id for result in search_result]
+    # returns only the record ids
     return embedding.get_match_record_ids_to_qdrant_ids(
         project_id, embedding_id, ids, limit
     )
