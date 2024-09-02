@@ -1,0 +1,15 @@
+name: 'ACR: Docker Delete'
+
+on:
+  delete:
+    
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+jobs: 
+  call-az-acr-delete:
+    uses: code-kern-ai/cicd-deployment-scripts/.github/workflows/az_acr_delete.yml@dev
+    if: github.event.ref_type == 'branch'
+    secrets: inherit
