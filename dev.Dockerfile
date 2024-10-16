@@ -1,4 +1,4 @@
-FROM kernai/refinery-parent-images:v1.18.1-common
+FROM kernai/refinery-parent-images:v1.19.0-common
 
 WORKDIR /app
 
