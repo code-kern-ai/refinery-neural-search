@@ -42,13 +42,11 @@ steps:
   - name: trigger update
     image: appleboy/drone-ssh
     settings:
-      host: app.legacy.kern.ai
+      host: app.dev.kern.ai
       username:
-        from_secret: ssh_user
+        from_secret: az_ssh_user
       key:
-        from_secret: ssh_key
-      ssh_passphrase:
-        from_secret: ssh_passphrase
+        from_secret: az_ssh_key
       script:
         - /bin/sh ./trigger_dev_deployment.sh
 
