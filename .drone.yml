@@ -44,9 +44,9 @@ steps:
     settings:
       host: app.dev.kern.ai
       username:
-        from_secret: az_ssh_user
+        from_secret: dev_cognition_ssh_user
       key:
-        from_secret: az_ssh_key
+        from_secret: dev_cognition_ssh_key
       script:
         - /bin/sh ./trigger_dev_deployment.sh
 
