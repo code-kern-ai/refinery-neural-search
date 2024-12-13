@@ -1,4 +1,4 @@
-FROM kernai/refinery-parent-images:v1.19.0-common
+FROM kernai/refinery-parent-images:update-numpy-common
 
 WORKDIR /app
 
