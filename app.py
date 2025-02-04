@@ -3,7 +3,11 @@ from fastapi import FastAPI, responses, status, Request
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any, Union
 from neural_search import util
-from submodules.model.business_objects import general
+from submodules.model.business_objects import (
+    general,
+    playground_question as playground_question_db_bo,
+    record as record_db_bo,
+)
 from submodules.model import session
 
 app = FastAPI()
@@ -62,11 +66,15 @@ class MostSimilarByEmbeddingRequest(BaseModel):
     limit: int = 5
     att_filter: Optional[List[Dict[str, Any]]] = None
     threshold: Optional[Union[float, int]] = None
+    save_question: Optional[bool] = None
+    question: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 @app.post("/most_similar_by_embedding")
 def most_similar_by_embedding(
-    request: MostSimilarByEmbeddingRequest, include_scores: bool = False
+    request: MostSimilarByEmbeddingRequest,
+    include_scores: bool = False,
 ) -> responses.JSONResponse:
     """Find the n most similar records with respect to the specified embedding.
         Args:
@@ -95,6 +103,31 @@ def most_similar_by_embedding(
         request.threshold,
         include_scores,
     )
+
+    if request.save_question:
+        record_ids = [record["id"] for record in similar_records]
+        record_obj_map = record_db_bo.get_full_record_data_for_id_group(
+            request.project_id, record_ids
+        )
+
+        full_records = [
+            {
+                "data": record_obj_map.get(record["id"]),
+                "id": record["id"],
+                "score": record["score"],
+            }
+            for record in similar_records
+        ]
+
+        playground_question_db_bo.create(
+            request.project_id,
+            request.question,
+            request.user_id,
+            request.embedding_id,
+            full_records,
+            with_commit=True,
+        )
+
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
         content=similar_records,
