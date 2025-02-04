@@ -104,29 +104,11 @@ def most_similar_by_embedding(
         include_scores,
     )
 
-    if request.save_question:
-        record_ids = [record["id"] for record in similar_records]
-        record_obj_map = record_db_bo.get_full_record_data_for_id_group(
-            request.project_id, record_ids
-        )
-
-        full_records = [
-            {
-                "data": record_obj_map.get(record["id"]),
-                "id": record["id"],
-                "score": record["score"],
-            }
-            for record in similar_records
-        ]
-
-        playground_question_db_bo.create(
-            request.project_id,
-            request.question,
-            request.user_id,
-            request.embedding_id,
-            full_records,
-            with_commit=True,
-        )
+    playground_question_db_bo.create(
+        request.project_id,
+        request.question,
+        with_commit=True,
+    )
 
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
