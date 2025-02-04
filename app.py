@@ -66,9 +66,7 @@ class MostSimilarByEmbeddingRequest(BaseModel):
     limit: int = 5
     att_filter: Optional[List[Dict[str, Any]]] = None
     threshold: Optional[Union[float, int]] = None
-    save_question: Optional[bool] = None
     question: Optional[str] = None
-    user_id: Optional[str] = None
 
 
 @app.post("/most_similar_by_embedding")
