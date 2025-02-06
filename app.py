@@ -6,7 +6,6 @@ from neural_search import util
 from submodules.model.business_objects import (
     general,
     playground_question as playground_question_db_bo,
-    record as record_db_bo,
 )
 from submodules.model import session
 
