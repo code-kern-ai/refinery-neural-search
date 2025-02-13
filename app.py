@@ -101,11 +101,12 @@ def most_similar_by_embedding(
         include_scores,
     )
 
-    playground_question_db_bo.create(
-        request.project_id,
-        request.question,
-        with_commit=True,
-    )
+    if request.question:
+        playground_question_db_bo.create(
+            request.project_id,
+            request.question,
+            with_commit=True,
+        )
 
     return responses.JSONResponse(
         status_code=status.HTTP_200_OK,
