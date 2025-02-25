@@ -22,12 +22,13 @@ docker stop refinery-neural-search > /dev/null 2>&1
 echo -ne '\t [done]\n'
 
 echo -ne 'building container...'
-docker build -t refinery-neural-search-dev -f dev.Dockerfile . > /dev/null 2>&1
+docker build -t refinery-neural-search-dev -f dev.Dockerfile .
 echo -ne '\t\t [done]\n'
 
 echo -ne 'starting...'
 docker run -d --rm \
 --name refinery-neural-search \
+-p $DEBUG_PORT:$DEBUG_PORT \
 -p 7063:80 \
 -e POSTGRES=postgresql://postgres:kern@graphql-postgres:5432 \
 -e QDRANT_PORT=6333 \
