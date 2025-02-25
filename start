@@ -1,4 +1,20 @@
 #!/bin/bash
+
+DEBUG_MODE=false
+DEBUG_PORT=15676
+
+while getopts d flag
+do
+    case "${flag}" in
+        d) DEBUG_MODE=true;;
+    esac
+done
+
+CMD=""
+if [ $DEBUG_MODE = true ]; then
+    CMD="debugpy --wait-for-client --listen 0.0.0.0:$DEBUG_PORT -m uvicorn app:app --host 0.0.0.0 --port 80 --reload"
+fi
+
 trap "echo -ne '\nstopping container...' && docker stop refinery-neural-search > /dev/null 2>&1 && echo -ne '\t\t [done]\n'" EXIT
 
 echo -ne 'stopping old container...'
@@ -18,7 +34,10 @@ docker run -d --rm \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
 --network dev-setup_default \
-refinery-neural-search-dev > /dev/null 2>&1
+refinery-neural-search-dev $CMD > /dev/null 2>&1
 echo -ne '\t\t\t [done]\n'
 
+if [ $DEBUG_MODE = true ]; then
+    echo -e "\033[0;33muse VSCode Debugger (Python Debugger: refinery-neural-search) to start the service\033[0m"
+fi
 docker logs -f refinery-neural-search
