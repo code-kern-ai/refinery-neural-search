@@ -1,4 +1,6 @@
-.vscode/
+.vscode/*
+!.vscode/launch.json
+
 .DS_Store
 
 # Byte-compiled / optimized / DLL files
