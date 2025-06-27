@@ -14,6 +14,10 @@ from submodules.model.business_objects import (
     user,
 )
 from submodules.model.cognition_objects import group_member
+from submodules.model.integration_objects.helper import (
+    REFINERY_ATTRIBUTE_ACCESS_GROUPS,
+    REFINERY_ATTRIBUTE_ACCESS_USERS,
+)
 from submodules.model.enums import EmbeddingPlatform, LabelSource, UserRoles
 
 from .similarity_threshold import SimilarityThreshold, NO_THRESHOLD_INDICATOR
@@ -157,13 +161,13 @@ def __add_access_management_filter(
     access_management_filter = models.Filter(
         should=[
             models.FieldCondition(
-                key="__ACCESS_GROUPS",
+                key=REFINERY_ATTRIBUTE_ACCESS_GROUPS,
                 match=models.MatchAny(
                     any=group_ids,
                 ),
             ),
             models.FieldCondition(
-                key="__ACCESS_USERS",
+                key=REFINERY_ATTRIBUTE_ACCESS_USERS,
                 match=models.MatchValue(
                     value=user_id,
                 ),

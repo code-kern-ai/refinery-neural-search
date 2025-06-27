@@ -100,7 +100,7 @@ def most_similar_by_embedding(
         request.att_filter,
         request.threshold,
         include_scores,
-        request.user_id
+        request.user_id,
     )
 
     if request.question:
