@@ -69,7 +69,7 @@ def most_similar_by_embedding(
         if requesting_user.role != UserRoles.ENGINEER.value:
             check_access = True
             group_members = group_member.get_by_user_id(user_id)
-            group_ids = [group_member.group_id for group_member in group_members]
+            group_ids = [str(group_member.group_id) for group_member in group_members]
         else:
             check_access = False
     else:
