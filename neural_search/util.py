@@ -148,66 +148,60 @@ def __is_label_filter(key: str) -> bool:
     return parts[0] == LABELS_QDRANT
 
 
-def __build_filter(att_filter: List[Dict[str, Any]]) -> models.Filter:
-    if att_filter is None or len(att_filter) == 0:
+def __build_filter(att_filter: List[Dict[str, Any]]) -> Optional[models.Filter]:
+    if not att_filter:
         return None
-    must = [__build_filter_item(filter_item) for filter_item in att_filter]
+    must = [__build_filter_item(item) for item in att_filter]
     return models.Filter(must=must)
 
 
 def __add_access_management_filter(
-    base_filter: models.Filter, group_ids, user_id
+    base_filter: Optional[models.Filter], group_ids: List[str], user_id: str
 ) -> models.Filter:
-    access_management_filter = models.Filter(
-        should=[
-            models.FieldCondition(
-                key=REFINERY_ATTRIBUTE_ACCESS_GROUPS,
-                match=models.MatchAny(
-                    any=group_ids,
-                ),
-            ),
-            models.FieldCondition(
-                key=REFINERY_ATTRIBUTE_ACCESS_USERS,
-                match=models.MatchValue(
-                    value=user_id,
-                ),
-            ),
-        ]
-    )
+    access_conditions = [
+        models.FieldCondition(
+            key=REFINERY_ATTRIBUTE_ACCESS_GROUPS,
+            match=models.MatchAny(any=group_ids),
+        ),
+        models.FieldCondition(
+            key=REFINERY_ATTRIBUTE_ACCESS_USERS,
+            match=models.MatchValue(value=user_id),
+        ),
+    ]
+
     if base_filter is None:
-        return access_management_filter
-    else:
-        return models.Filter(
-            must=base_filter,
-            should=access_management_filter,
-        )
+        return models.Filter(should=access_conditions)
+
+    return models.Filter(
+        must=base_filter.must or [],
+        should=access_conditions,
+    )
 
 
 def __build_filter_item(filter_item: Dict[str, Any]) -> models.FieldCondition:
-    if isinstance(filter_item["value"], list):
-        if filter_item.get("type") == "between":
-            return models.FieldCondition(
-                key=filter_item["key"],
-                range=models.Range(
-                    gte=filter_item["value"][0],
-                    lte=filter_item["value"][1],
-                ),
-            )
-        else:
-            should = [
-                models.FieldCondition(
-                    key=filter_item["key"], match=models.MatchValue(value=value)
-                )
-                for value in filter_item["value"]
-            ]
-            return models.Filter(should=should)
-    else:
+    key = filter_item["key"]
+    value = filter_item["value"]
+    typ = filter_item.get("type")
+
+    # BETWEEN
+    if isinstance(value, list) and typ == "between":
         return models.FieldCondition(
-            key=filter_item["key"],
-            match=models.MatchValue(
-                value=filter_item["value"],
-            ),
+            key=key,
+            range=models.Range(gte=value[0], lte=value[1]),
         )
+
+    # IN (...)
+    if isinstance(value, list):
+        return models.FieldCondition(
+            key=key,
+            match=models.MatchAny(any=value),
+        )
+
+    # = single value
+    return models.FieldCondition(
+        key=key,
+        match=models.MatchValue(value=value),
+    )
 
 
 def recreate_collection(project_id: str, embedding_id: str) -> int:
