@@ -9,6 +9,8 @@ from submodules.model.business_objects import (
 )
 from submodules.model import session
 
+import traceback
+
 app = FastAPI()
 
 
@@ -17,6 +19,9 @@ async def handle_db_session(request: Request, call_next):
     session_token = general.get_ctx_token()
     try:
         response = await call_next(request)
+    except:
+        traceback.print_exc()
+        response = None
     finally:
         general.remove_and_refresh_session(session_token)
 

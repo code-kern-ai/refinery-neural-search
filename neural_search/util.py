@@ -419,7 +419,6 @@ def update_attribute_payloads(
         for point_id, payload in zip(ids_for_storage, payloads)
     ]
 
-    # TODO: handle errors in batch update
     qdrant_client.batch_update_points(
         collection_name=embedding_id,
         update_operations=update_operations,
