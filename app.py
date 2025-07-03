@@ -19,8 +19,8 @@ async def handle_db_session(request: Request, call_next):
     session_token = general.get_ctx_token()
     try:
         response = await call_next(request)
-    except:
-        traceback.print_exc()
+    except Exception:
+        print(traceback.format_exc(), flush=True)
         response = None
     finally:
         general.remove_and_refresh_session(session_token)
