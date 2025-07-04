@@ -196,6 +196,7 @@ def update_attribute_payloads(
             request.record_ids,
         )
     except Exception:
+        print(traceback.format_exc(), flush=True)
         return responses.PlainTextResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
