@@ -9,6 +9,8 @@ from submodules.model.business_objects import (
 )
 from submodules.model import session
 
+import traceback
+
 app = FastAPI()
 
 
@@ -17,6 +19,9 @@ async def handle_db_session(request: Request, call_next):
     session_token = general.get_ctx_token()
     try:
         response = await call_next(request)
+    except Exception:
+        print(traceback.format_exc(), flush=True)
+        response = None
     finally:
         general.remove_and_refresh_session(session_token)
 
@@ -66,6 +71,7 @@ class MostSimilarByEmbeddingRequest(BaseModel):
     att_filter: Optional[List[Dict[str, Any]]] = None
     threshold: Optional[Union[float, int]] = None
     question: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 @app.post("/most_similar_by_embedding")
@@ -99,6 +105,7 @@ def most_similar_by_embedding(
         request.att_filter,
         request.threshold,
         include_scores,
+        request.user_id,
     )
 
     if request.question:
