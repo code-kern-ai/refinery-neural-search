@@ -51,20 +51,20 @@ fastapi==0.115.2
     # via -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-neural-search/requirements/common-requirements.txt
 greenlet==3.2.3
     # via sqlalchemy
-grpcio==1.58.0
+grpcio==1.73.1
     # via
     #   grpcio-tools
     #   qdrant-client
-grpcio-tools==1.58.0
+grpcio-tools==1.73.1
     # via qdrant-client
 h11==0.16.0
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-neural-search/requirements/common-requirements.txt
     #   httpcore
     #   uvicorn
-h2==4.1.0
+h2==4.2.0
     # via httpx
-hpack==4.0.0
+hpack==4.1.0
     # via h2
 httpcore==1.0.9
     # via
@@ -74,7 +74,7 @@ httpx[http2]==0.28.1
     # via
     #   -r requirements/requirements.in
     #   qdrant-client
-hyperframe==6.0.1
+hyperframe==6.1.0
     # via h2
 idna==3.10
     # via
@@ -97,9 +97,9 @@ numpy==1.23.4
     #   scipy
 pandas==1.5.1
     # via -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-neural-search/requirements/common-requirements.txt
-portalocker==2.7.0
+portalocker==2.10.1
     # via qdrant-client
-protobuf==4.24.3
+protobuf==6.31.1
     # via grpcio-tools
 psycopg2-binary==2.9.9
     # via -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-neural-search/requirements/common-requirements.txt
