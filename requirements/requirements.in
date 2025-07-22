@@ -1,5 +1,5 @@
 # REMARK: in common-requirements.txt the dependency of h11 is commented out
 # because it is not compatible with the version of qdrant-client
 -r common-requirements.txt
-qdrant-client==1.7.3
+qdrant-client==1.9.2
 scipy==1.11.2
