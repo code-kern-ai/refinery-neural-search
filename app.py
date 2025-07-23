@@ -80,11 +80,13 @@ def most_similar_by_embedding(
     include_scores: bool = False,
 ) -> responses.JSONResponse:
     """Find the n most similar records with respect to the specified embedding.
-        Args:
+    Args:
         embedding_id (str): Embedding id.
         record_id (str): The record for which similar records are searched.
         limit (int): Specifies the maximum amount of returned records.
-        att_filter(Optional[Dict[str, Any]]]): Specifies the attribute filter for the search as dict objects.
+        att_filter (Optional[Dict[str, Any]]]): Specifies the attribute filter for the search as dict objects.
+            Note: Record values can now also be lists (e.g., {"name": ["John", "Alex"]}).
+            Filters will match if any or all (type "any" or type "all") of the listed values satisfy the condition.
         threshold: Optional[float]: None = calculated DB threshold, -9999 = no threshold, specified = use value
         example_filter = [
             {"key": "name", "value": ["John", "Doe"]}, -> name IN ("John", "Doe")

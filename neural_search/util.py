@@ -151,7 +151,10 @@ def __is_label_filter(key: str) -> bool:
 def __build_filter(att_filter: List[Dict[str, Any]]) -> Optional[models.Filter]:
     if not att_filter:
         return None
-    must = [__build_filter_item(item) for item in att_filter]
+    must = []
+    for item in att_filter:
+        cond = __build_filter_item(item)
+        must.append(cond)
     return models.Filter(must=must)
 
 
@@ -178,26 +181,32 @@ def __add_access_management_filter(
     )
 
 
-def __build_filter_item(filter_item: Dict[str, Any]) -> models.FieldCondition:
+def __build_filter_item(
+    filter_item: Dict[str, Any],
+) -> models.FieldCondition | models.Filter:
     key = filter_item["key"]
     value = filter_item["value"]
-    typ = filter_item.get("type")
+    type = filter_item.get("type")
 
-    # BETWEEN
-    if isinstance(value, list) and typ == "between":
+    if isinstance(value, list) and type == "between":
         return models.FieldCondition(
             key=key,
             range=models.Range(gte=value[0], lte=value[1]),
         )
 
-    # IN (...)
-    if isinstance(value, list):
+    if isinstance(value, list) and type == "all":
+        conditions = [
+            models.FieldCondition(key=key, match=models.MatchValue(value=v))
+            for v in value
+        ]
+        return models.Filter(must=conditions)
+
+    if isinstance(value, list) and (type == "any" or type is None):
         return models.FieldCondition(
             key=key,
             match=models.MatchAny(any=value),
         )
 
-    # = single value
     return models.FieldCondition(
         key=key,
         match=models.MatchValue(value=value),
