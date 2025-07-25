@@ -231,12 +231,6 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     )
     records = None
 
-    if (
-        embedding.get(project_id, embedding_id).platform
-        == EmbeddingPlatform.PYTHON.value
-    ):
-        embeddings = [[float(e) for e in embedding] for embedding in embeddings]
-
     # extend payloads
     label_payload_extension = record_label_association.get_label_payload_for_qdrant(
         project_id
