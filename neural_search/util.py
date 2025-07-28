@@ -494,11 +494,6 @@ def __qdrant_collection_exits(collection_name: str) -> bool:
 def get_distance_key(
     platform: str, model: str, for_qdrant: bool = True
 ) -> Union[str, models.Distance]:
-    if platform == EmbeddingPlatform.PYTHON.value and model == "tf-idf":
-        if for_qdrant:
-            return models.Distance.COSINE
-        else:
-            return "cosine"
     if for_qdrant:
         return models.Distance.EUCLID
     else:
