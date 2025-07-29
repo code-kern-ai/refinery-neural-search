@@ -270,7 +270,7 @@ def get_collections():
 
     try:
         response = qdrant_client.get_collections()
-        collections = [collection.name for collection in response]
+        collections = [collection.name for collection in response.collections]
     except Exception:
         return collections
 
