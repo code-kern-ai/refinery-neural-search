@@ -231,12 +231,6 @@ def recreate_collection(project_id: str, embedding_id: str) -> int:
     )
     records = None
 
-    if (
-        embedding.get(project_id, embedding_id).platform
-        == EmbeddingPlatform.PYTHON.value
-    ):
-        embeddings = [[float(e) for e in embedding] for embedding in embeddings]
-
     # extend payloads
     label_payload_extension = record_label_association.get_label_payload_for_qdrant(
         project_id
@@ -500,11 +494,6 @@ def __qdrant_collection_exits(collection_name: str) -> bool:
 def get_distance_key(
     platform: str, model: str, for_qdrant: bool = True
 ) -> Union[str, models.Distance]:
-    if platform == EmbeddingPlatform.PYTHON.value and model == "tf-idf":
-        if for_qdrant:
-            return models.Distance.COSINE
-        else:
-            return "cosine"
     if for_qdrant:
         return models.Distance.EUCLID
     else:
