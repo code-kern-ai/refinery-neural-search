@@ -186,7 +186,7 @@ def __build_filter_item(
 ) -> models.FieldCondition | models.Filter:
     key = filter_item["key"]
     value = filter_item["value"]
-    type = filter_item.get("type")
+    type = filter_item.get("type", "any")
 
     if isinstance(value, list) and type == "between":
         return models.FieldCondition(
@@ -201,7 +201,7 @@ def __build_filter_item(
         ]
         return models.Filter(must=conditions)
 
-    if isinstance(value, list) and (type == "any" or type is None):
+    if isinstance(value, list) and type == "any":
         return models.FieldCondition(
             key=key,
             match=models.MatchAny(any=value),
