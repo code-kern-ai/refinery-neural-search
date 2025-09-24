@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+import os
+import logging
 from fastapi import FastAPI, responses, status, Request
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any, Union
@@ -7,11 +8,25 @@ from submodules.model.business_objects import (
     general,
     playground_question as playground_question_db_bo,
 )
-from submodules.model import session
+from submodules.model import session, telemetry
 
 import traceback
 
-app = FastAPI()
+OTLP_GRPC_ENDPOINT = os.getenv("OTLP_GRPC_ENDPOINT", "tempo:4317")
+
+app_name = "refinery-neural-search"
+app = FastAPI(title=app_name)
+
+if telemetry.ENABLE_TELEMETRY:
+    print("WARNING:  Running telemetry.", flush=True)
+    telemetry.setting_otlp(app, app_name=app_name, endpoint=OTLP_GRPC_ENDPOINT)
+    app.add_middleware(telemetry.PrometheusMiddleware, app_name=app_name)
+    app.add_route("/metrics", telemetry.metrics)
+
+    # Filter out /metrics
+    logging.getLogger("uvicorn.access").addFilter(
+        lambda record: "GET /metrics" not in record.getMessage()
+    )
 
 
 @app.middleware("http")
