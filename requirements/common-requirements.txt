@@ -6,57 +6,117 @@
 #
 annotated-types==0.7.0
     # via pydantic
-anyio==4.9.0
+anyio==4.11.0
     # via starlette
 argon2-cffi==25.1.0
     # via minio
-argon2-cffi-bindings==21.2.0
+argon2-cffi-bindings==25.1.0
     # via argon2-cffi
+asgiref==3.9.2
+    # via opentelemetry-instrumentation-asgi
 boto3==1.39.6
     # via -r common-requirements.in
-botocore==1.39.10
+botocore==1.39.17
     # via
     #   boto3
     #   s3transfer
-certifi==2025.7.14
+certifi==2025.8.3
     # via
     #   minio
     #   requests
-cffi==1.17.1
+cffi==2.0.0
     # via argon2-cffi-bindings
-charset-normalizer==3.4.2
+charset-normalizer==3.4.3
     # via requests
-click==8.2.1
+click==8.3.0
     # via uvicorn
 fastapi==0.116.1
     # via -r mini-requirements.in
+googleapis-common-protos==1.70.0
+    # via opentelemetry-exporter-otlp-proto-grpc
+grpcio==1.75.0
+    # via opentelemetry-exporter-otlp-proto-grpc
 h11==0.16.0
     # via uvicorn
 idna==3.10
     # via
     #   anyio
     #   requests
+importlib-metadata==8.7.0
+    # via opentelemetry-api
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
 minio==7.2.15
     # via -r common-requirements.in
-numpy==1.23.4
+numpy==1.26.2
     # via
     #   -r common-requirements.in
     #   pandas
+opentelemetry-api==1.37.0
+    # via
+    #   -r common-requirements.in
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-instrumentation-logging
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-otlp-proto-common==1.37.0
+    # via opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-exporter-otlp-proto-grpc==1.37.0
+    # via -r common-requirements.in
+opentelemetry-instrumentation==0.58b0
+    # via
+    #   -r common-requirements.in
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-instrumentation-logging
+opentelemetry-instrumentation-asgi==0.58b0
+    # via opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-fastapi==0.58b0
+    # via -r common-requirements.in
+opentelemetry-instrumentation-logging==0.58b0
+    # via -r common-requirements.in
+opentelemetry-proto==1.37.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-sdk==1.37.0
+    # via
+    #   -r common-requirements.in
+    #   opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-semantic-conventions==0.58b0
+    # via
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-sdk
+opentelemetry-util-http==0.58b0
+    # via
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+packaging==25.0
+    # via opentelemetry-instrumentation
 pandas==1.5.1
     # via -r common-requirements.in
+prometheus-client==0.23.1
+    # via -r common-requirements.in
+protobuf==6.32.1
+    # via
+    #   googleapis-common-protos
+    #   opentelemetry-proto
 psycopg2-binary==2.9.9
     # via -r common-requirements.in
-pycparser==2.22
+pycparser==2.23
     # via cffi
 pycryptodome==3.23.0
     # via minio
 pydantic==2.7.4
     # via
-    #   -r mini-requirements.in
+    #   -r /Usmini-requirements.in
     #   fastapi
 pydantic-core==2.18.4
     # via pydantic
@@ -76,13 +136,18 @@ sniffio==1.3.1
     # via anyio
 sqlalchemy==1.4.42
     # via -r common-requirements.in
-starlette==0.47.2
+starlette==0.47.3
     # via fastapi
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   anyio
     #   fastapi
+    #   grpcio
     #   minio
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
     #   starlette
@@ -93,3 +158,7 @@ urllib3==2.5.0
     #   requests
 uvicorn==0.35.0
     # via -r mini-requirements.in
+wrapt==1.17.3
+    # via opentelemetry-instrumentation
+zipp==3.23.0
+    # via importlib-metadata
