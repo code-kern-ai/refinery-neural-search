@@ -38,6 +38,8 @@ docker run -d --rm \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
 --network dev-setup_default \
+--log-driver=loki \
+--log-opt loki-url="http://$HOST_IP:3100/loki/api/v1/push" \
 refinery-neural-search-dev $CMD > /dev/null 2>&1
 echo -ne '\t\t\t [done]\n'
 
