@@ -19,6 +19,7 @@ app = FastAPI(title=app_name)
 
 if telemetry.ENABLE_TELEMETRY:
     print("WARNING:  Running telemetry.", flush=True)
+    telemetry.setting_app_name(app_name)
     telemetry.setting_otlp(app, app_name=app_name, endpoint=OTLP_GRPC_ENDPOINT)
     app.add_middleware(telemetry.PrometheusMiddleware, app_name=app_name)
     app.add_route("/metrics", telemetry.metrics)
