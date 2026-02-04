@@ -1,0 +1,127 @@
+---
+description: Rules for exception handling and custom exceptions
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# Exceptions Guidelines
+
+## Exception Handling Patterns
+
+This service uses standard Python exceptions and handles them in routes and neural_search functions.
+
+**Standard exceptions:**
+- `ValueError`: Invalid input parameters
+- `Exception`: Generic errors (caught and logged)
+
+**Submodule exceptions:**
+```python
+from submodules.model.exceptions import EntityNotFoundException
+```
+
+## Usage Patterns
+
+**Raising exceptions:**
+```python
+# Validation
+if not collection_exists(embedding_id):
+    raise ValueError(f"Collection {embedding_id} does not exist")
+
+# Not found (from submodules)
+embedding_item = embedding.get(project_id, embedding_id)
+if not embedding_item:
+    return status.HTTP_404_NOT_FOUND
+```
+
+**Handling in routes:**
+```python
+@app.post("/update_attribute_payloads")
+def update_attribute_payloads(request: UpdateAttributePayloadsRequest):
+    try:
+        util.update_attribute_payloads(
+            request.project_id,
+            request.embedding_id,
+            request.record_ids,
+        )
+    except Exception:
+        print(traceback.format_exc(), flush=True)
+        return responses.PlainTextResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+```
+
+**Handling in neural_search functions:**
+```python
+def most_similar_by_embedding(...):
+    try:
+        search_result = qdrant_client.search(...)
+    except Exception as e:
+        print(f"Error during search in Qdrant: {e}", flush=True)
+        print(traceback.format_exc(), flush=True)
+        return []  # Return empty list on error
+```
+
+**Middleware exception handling:**
+```python
+@app.middleware("http")
+async def handle_db_session(request: Request, call_next):
+    session_token = general.get_ctx_token()
+    try:
+        response = await call_next(request)
+    except Exception:
+        print(traceback.format_exc(), flush=True)
+        response = None
+    finally:
+        general.remove_and_refresh_session(session_token)
+    return response
+```
+
+## HTTP Status Code Mapping
+
+- `200`: Success
+- `400`: `ValueError` - Invalid input parameters
+- `404`: Entity not found (returned as status code, not exception)
+- `412`: Precondition failed (e.g., no embeddings found)
+- `429`: Too many requests (e.g., collection creation in progress)
+- `500`: Internal server error - caught exceptions
+
+## Error Response Patterns
+
+**JSON error response:**
+```python
+return responses.JSONResponse(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    content={"error": str(e)},
+)
+```
+
+**Plain text error response:**
+```python
+return responses.PlainTextResponse(
+    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+)
+```
+
+**Return status code from function:**
+```python
+def recreate_collection(project_id: str, embedding_id: str) -> int:
+    embedding_item = embedding.get(project_id, embedding_id)
+    if not embedding_item:
+        return status.HTTP_404_NOT_FOUND
+    # ... rest of function
+    return status.HTTP_200_OK
+```
+
+## Best Practices
+
+1. Use `ValueError` for invalid input parameters
+2. Return HTTP status codes from functions when appropriate (e.g., `recreate_collection`)
+3. Log exceptions with full traceback using `traceback.format_exc()`
+4. Return empty results (empty list) on errors in search functions rather than raising
+5. Map exceptions to appropriate HTTP status codes in routes
+6. Always use `flush=True` when printing errors
+7. Handle Qdrant exceptions gracefully - log and return empty results or error status
+8. Don't swallow exceptions silently - always log them
+9. Use try-except-finally for resource cleanup (sessions)
+10. Return appropriate response types (`JSONResponse` or `PlainTextResponse`) based on endpoint

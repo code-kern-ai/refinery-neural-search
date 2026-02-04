@@ -1,0 +1,92 @@
+---
+description: Rules for middleware and request processing
+globs: ["app.py"]
+alwaysApply: true
+---
+
+# Middleware Guidelines
+
+Middleware handles cross-cutting concerns: database sessions and error handling. Middleware is defined inline in `app.py`.
+
+## Database Session Management
+
+Sessions are managed by middleware using submodule session management. Never create SQLAlchemy sessions directly.
+
+**Middleware pattern:**
+```python
+from fastapi import FastAPI, Request
+from submodules.model.business_objects import general
+import traceback
+
+app = FastAPI(title="refinery-neural-search")
+
+@app.middleware("http")
+async def handle_db_session(request: Request, call_next):
+    session_token = general.get_ctx_token()
+    try:
+        response = await call_next(request)
+    except Exception:
+        print(traceback.format_exc(), flush=True)
+        response = None
+    finally:
+        general.remove_and_refresh_session(session_token)
+    
+    return response
+```
+
+## Session Management Functions
+
+**Get context token:**
+```python
+from submodules.model.business_objects import general
+
+session_token = general.get_ctx_token()
+```
+
+**Remove and refresh session:**
+```python
+general.remove_and_refresh_session(session_token)
+```
+
+## Error Handling
+
+Middleware catches exceptions and logs them:
+
+```python
+@app.middleware("http")
+async def handle_db_session(request: Request, call_next):
+    session_token = general.get_ctx_token()
+    try:
+        response = await call_next(request)
+    except Exception:
+        print(traceback.format_exc(), flush=True)
+        response = None  # Routes should handle their own error responses
+    finally:
+        general.remove_and_refresh_session(session_token)
+    
+    return response
+```
+
+## Telemetry Middleware
+
+Telemetry middleware is added conditionally:
+
+```python
+from submodules.model import telemetry
+
+if telemetry.ENABLE_TELEMETRY:
+    telemetry.setting_app_name(app_name)
+    telemetry.setting_otlp(app, app_name=app_name, endpoint=OTLP_GRPC_ENDPOINT)
+    app.add_middleware(telemetry.PrometheusMiddleware, app_name=app_name)
+    app.add_route("/metrics", telemetry.metrics)
+```
+
+## Best Practices
+
+1. Never create SQLAlchemy sessions directly - use submodule session management
+2. Always cleanup resources in `finally` blocks using `general.remove_and_refresh_session()`
+3. Log exceptions with full traceback using `traceback.format_exc()`
+4. Let routes handle their own error responses - middleware just logs
+5. Keep middleware lightweight - move heavy operations to neural_search functions
+6. Use `general.get_ctx_token()` to get session token before request processing
+7. Always call `general.remove_and_refresh_session()` in finally block

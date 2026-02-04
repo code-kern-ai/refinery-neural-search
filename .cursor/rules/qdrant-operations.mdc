@@ -1,0 +1,284 @@
+---
+description: Rules for Qdrant vector database operations
+globs: ["neural_search/**/*.py"]
+alwaysApply: true
+---
+
+# Qdrant Operations Guidelines
+
+Guidelines for working with Qdrant vector database in the neural search service.
+
+## Qdrant Client Setup
+
+**Client initialization:**
+```python
+from qdrant_client import QdrantClient
+import os
+
+port = int(os.environ["QDRANT_PORT"])
+qdrant_client = QdrantClient(host="qdrant", port=port, timeout=60)
+```
+
+## Collection Operations
+
+**Check collection existence:**
+```python
+def __qdrant_collection_exits(collection_name: str) -> bool:
+    """Check if Qdrant collection exists."""
+    try:
+        qdrant_client.get_collection(collection_name)
+        return True
+    except Exception:
+        return False
+```
+
+**Get collections:**
+```python
+def get_collections():
+    try:
+        response = qdrant_client.get_collections()
+        return [collection.name for collection in response.collections]
+    except Exception:
+        return []
+```
+
+**Recreate collection:**
+```python
+from qdrant_client.http import models
+
+qdrant_client.recreate_collection(
+    collection_name=embedding_id,
+    vectors_config=models.VectorParams(
+        size=vector_size,
+        distance=get_distance_key(embedding_item.platform, embedding_item.model),
+    ),
+)
+```
+
+**Delete collection:**
+```python
+qdrant_client.delete_collection(collection_name=embedding_id)
+```
+
+## Vector Search Operations
+
+**Basic search:**
+```python
+import numpy as np
+
+query_vector = np.array(embedding_tensor)
+search_result = qdrant_client.search(
+    collection_name=embedding_id,
+    query_vector=query_vector,
+    query_filter=_filter,
+    limit=tmp_limit,
+    score_threshold=similarity_threshold,
+)
+
+# Extract IDs
+ids = [result.id for result in search_result]
+```
+
+**Search with filter:**
+```python
+from qdrant_client.http import models
+
+_filter = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="attribute_name",
+            match=models.MatchValue(value="value"),
+        )
+    ]
+)
+
+search_result = qdrant_client.search(
+    collection_name=embedding_id,
+    query_vector=query_vector,
+    query_filter=_filter,
+    limit=limit,
+)
+```
+
+## Filter Building
+
+**Match any:**
+```python
+models.FieldCondition(
+    key="attribute_name",
+    match=models.MatchAny(any=["value1", "value2"]),
+)
+```
+
+**Match value:**
+```python
+models.FieldCondition(
+    key="attribute_name",
+    match=models.MatchValue(value="value"),
+)
+```
+
+**Range filter:**
+```python
+models.FieldCondition(
+    key="attribute_name",
+    range=models.Range(gte=min_value, lte=max_value),
+)
+```
+
+**Complex filter (must + should):**
+```python
+models.Filter(
+    must=[...],  # All conditions must match
+    should=[...],  # At least one condition must match
+)
+```
+
+## Payload Operations
+
+**Upload records with payloads:**
+```python
+from qdrant_client.http import models
+
+records = [
+    models.Record(
+        id=record_id,
+        vector=embedding_vector,
+        payload={"attribute": "value"},
+    )
+    for record_id, embedding_vector in zip(ids, embeddings)
+]
+
+qdrant_client.upload_records(collection_name=embedding_id, records=records)
+```
+
+**Update payloads:**
+```python
+update_operations = [
+    models.OverwritePayloadOperation(
+        overwrite_payload=models.SetPayload(
+            payload=payload,
+            points=[point_id],
+        )
+    )
+    for point_id, payload in zip(ids_for_storage, payloads)
+]
+
+qdrant_client.batch_update_points(
+    collection_name=embedding_id,
+    update_operations=update_operations,
+)
+```
+
+**Set payload (add/update):**
+```python
+update_operations = [
+    models.SetPayloadOperation(
+        set_payload=models.SetPayload(
+            payload=payload,
+            points=[point_id],
+        )
+    )
+    for point_id, payload in zip(ids_for_storage, payloads)
+]
+
+qdrant_client.batch_update_points(
+    collection_name=embedding_id,
+    update_operations=update_operations,
+)
+```
+
+**Delete payload:**
+```python
+update_operations = [
+    models.DeletePayloadOperation(
+        delete_payload=models.DeletePayload(
+            keys=["key_to_delete"],
+            points=[point_id],
+        )
+    )
+    for point_id in ids_for_storage
+]
+
+qdrant_client.batch_update_points(
+    collection_name=embedding_id,
+    update_operations=update_operations,
+)
+```
+
+## Distance Metrics
+
+**Get distance key:**
+```python
+from qdrant_client.http import models
+
+def get_distance_key(platform: str, model: str, for_qdrant: bool = True):
+    if for_qdrant:
+        return models.Distance.EUCLID
+    else:
+        return "euclidean"
+```
+
+## Error Handling
+
+**Always handle Qdrant exceptions:**
+```python
+try:
+    search_result = qdrant_client.search(...)
+except Exception as e:
+    print(f"Error during search in Qdrant: {e}", flush=True)
+    print(traceback.format_exc(), flush=True)
+    return []  # Return empty result on error
+```
+
+**Check collection before operations:**
+```python
+if not __qdrant_collection_exits(embedding_id):
+    raise ValueError(f"Collection {embedding_id} does not exist.")
+```
+
+## Best Practices
+
+1. **Always check collection existence** before operations that require it
+2. **Handle exceptions gracefully** - log errors and return empty results or error status codes
+3. **Use appropriate distance metrics** - currently using EUCLID for Qdrant
+4. **Batch operations** when updating multiple points - use `batch_update_points()`
+5. **Validate vector dimensions** match collection vector size before uploading
+6. **Use filters efficiently** - build filters once, reuse when possible
+7. **Handle sub_keys** - use tensor IDs for embeddings with sub_keys, record IDs otherwise
+8. **Calculate thresholds** after recreating collections
+9. **Use appropriate payload operations**:
+   - `OverwritePayloadOperation` - replaces entire payload
+   - `SetPayloadOperation` - adds/updates specific keys
+   - `DeletePayloadOperation` - removes specific keys
+10. **Log errors with context** - include collection name and operation type in error messages
+11. **Use timeout** when initializing Qdrant client for long-running operations
+12. **Support access management** - add access filters when access management is active
+
+## Common Patterns
+
+**Search with access control:**
+```python
+if check_access:
+    _filter = __add_access_management_filter(_filter, group_ids, user_id)
+
+search_result = qdrant_client.search(
+    collection_name=embedding_id,
+    query_vector=query_vector,
+    query_filter=_filter,
+    limit=limit,
+    score_threshold=similarity_threshold,
+)
+```
+
+**Handle sub_keys:**
+```python
+has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+if has_sub_key:
+    ids_for_storage = tensor_ids
+    limit_factor = embedding.get_qdrant_limit_factor(project_id, embedding_id)
+    tmp_limit = (limit * limit_factor) + 25
+else:
+    ids_for_storage = record_ids
+    tmp_limit = limit
+```
