@@ -106,7 +106,7 @@ pandas==1.5.1
     # via -r common-requirements.in
 prometheus-client==0.23.1
     # via -r common-requirements.in
-protobuf==6.33.1
+protobuf==6.33.5
     # via
     #   googleapis-common-protos
     #   opentelemetry-proto
