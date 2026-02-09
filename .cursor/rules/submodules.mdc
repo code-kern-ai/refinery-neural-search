@@ -1,0 +1,112 @@
+---
+description: Rules for working with Git submodules (model)
+alwaysApply: true
+---
+
+# Submodules Guidelines
+
+## Critical Rule
+
+**BEFORE modifying code in `submodules/`, check the submodule's `.cursor/rules/` directory first.**
+
+- `submodules/model/.cursor/rules/` - Database models, business objects, enums, database operations
+
+Do NOT duplicate submodule rules in parent repository rules.
+
+## Import Patterns
+
+**From model submodule:**
+```python
+# Business objects
+from submodules.model.business_objects import (
+    general,
+    embedding,
+    record_label_association,
+    record,
+    project,
+    user,
+    playground_question,
+)
+
+# Cognition objects
+from submodules.model.cognition_objects import group_member
+
+# Models and enums
+from submodules.model import enums, session, telemetry
+from submodules.model.enums import EmbeddingPlatform, LabelSource, UserRoles
+
+# Utilities
+from submodules.model.util import sql_alchemy_to_dict
+from submodules.model.exceptions import EntityNotFoundException
+```
+
+## When to Modify Submodules
+
+**Modify when**: Adding data layer logic, new database operations, embedding-related functionality.
+
+**Don't modify when**: Change belongs in neural-search code (routes/util), just using existing functionality.
+
+## Database Schema Changes
+
+**When adding new tables or columns** in `submodules/model`:
+
+1. Make changes in `submodules/model/models.py` (add entity class or modify columns)
+2. Update `submodules/model/enums.py` if adding a new table (add to `Tablenames` enum)
+3. Create migration: `./db commit "Description of changes"` (must be run from `refinery-gateway` root)
+4. Apply migration: `./db migrate` (must be run from `refinery-gateway` root)
+
+**Important**: Database migrations MUST be done only from `refinery-gateway` root directory, not from within the submodule.
+
+**This is mandatory** - schema changes require both `commit` and `migrate` steps. See `submodules/model/.cursor/rules/entities.mdc` for detailed migration guidelines.
+
+## Common Patterns
+
+**Embedding operations:**
+```python
+from submodules.model.business_objects import embedding
+
+# Get embedding
+embedding_item = embedding.get(project_id, embedding_id)
+
+# Get tensors
+tensors = embedding.get_tensors_by_record_ids(embedding_id, record_ids)
+
+# Get filter attributes
+filter_attrs = embedding.get_filter_attribute_type_dict(project_id, embedding_id)
+
+# Check for sub_keys
+has_sub_key = embedding.has_sub_key(project_id, embedding_id)
+```
+
+**Record operations:**
+```python
+from submodules.model.business_objects import record
+
+# Get all record IDs
+record_ids = record.get_all_ids(project_id)
+
+# Count records without manual labels
+count = record.count_records_without_manual_label(project_id)
+```
+
+**Project operations:**
+```python
+from submodules.model.business_objects import project
+
+# Check access management
+is_active = project.check_access_management_active(project_id)
+```
+
+**Session management:**
+```python
+from submodules.model.business_objects import general
+
+# Get context token
+session_token = general.get_ctx_token()
+
+# Remove and refresh session
+general.remove_and_refresh_session(session_token)
+
+# Test database connection
+result = general.test_database_connection()
+```

@@ -1,0 +1,162 @@
+---
+description: Rules for FastAPI route definitions and HTTP handling
+globs: ["app.py"]
+alwaysApply: true
+---
+
+# FastAPI Routes Guidelines
+
+Routes handle HTTP request/response logic. Keep routes thin - validate input, call neural_search functions, format responses.
+
+## Route Structure
+
+Routes are defined directly in `app.py` using the FastAPI app instance:
+
+```python
+from fastapi import FastAPI, responses, status
+from neural_search import util
+
+app = FastAPI(title="refinery-neural-search")
+
+@app.post("/most_similar")
+def most_similar(
+    project_id: str,
+    embedding_id: str,
+    record_id: str,
+    limit: int = 100,
+) -> responses.JSONResponse:
+    similar_records = util.most_similar(
+        project_id, embedding_id, record_id, limit
+    )
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=similar_records,
+    )
+```
+
+## Response Patterns
+
+```python
+from fastapi import responses, status
+
+# JSON response with data
+return responses.JSONResponse(
+    status_code=status.HTTP_200_OK,
+    content=data,
+)
+
+# Plain text response
+return responses.PlainTextResponse(
+    status_code=status.HTTP_200_OK,
+    content="OK",
+)
+
+# Error handling
+try:
+    result = util.operation()
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=result,
+    )
+except ValueError as e:
+    return responses.JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"error": str(e)},
+    )
+except Exception as e:
+    print(traceback.format_exc(), flush=True)
+    return responses.PlainTextResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
+```
+
+## Request Parameters
+
+```python
+# Path parameters (not commonly used in this service)
+@app.get("/collection/{embedding_id}")
+def get_collection(embedding_id: str):
+    pass
+
+# Query parameters
+@app.get("/collection/exist")
+def collection_exists(
+    project_id: str,
+    embedding_id: str,
+    include_db_check: bool = False,
+) -> responses.JSONResponse:
+    pass
+
+# Request body with Pydantic model (defined inline in app.py)
+class MostSimilarByEmbeddingRequest(BaseModel):
+    project_id: str
+    embedding_id: str
+    embedding_tensor: List[float]
+    limit: int = 5
+    att_filter: Optional[List[Dict[str, Any]]] = None
+
+@app.post("/most_similar_by_embedding")
+def most_similar_by_embedding(
+    request: MostSimilarByEmbeddingRequest,
+    include_scores: bool = False,
+) -> responses.JSONResponse:
+    pass
+```
+
+## Route Patterns
+
+**Similarity Search:**
+```python
+@app.post("/most_similar")
+def most_similar(
+    project_id: str,
+    embedding_id: str,
+    record_id: str,
+    limit: int = 100,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
+) -> responses.JSONResponse:
+    similar_records = util.most_similar(
+        project_id, embedding_id, record_id, limit, att_filter
+    )
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=similar_records,
+    )
+```
+
+**Collection Management:**
+```python
+@app.post("/recreate_collection")
+def recreate_collection(
+    project_id: str, embedding_id: str
+) -> responses.PlainTextResponse:
+    status_code = util.recreate_collection(project_id, embedding_id)
+    return responses.PlainTextResponse(status_code=status_code)
+```
+
+**Health Check:**
+```python
+@app.get("/healthcheck")
+def healthcheck() -> responses.PlainTextResponse:
+    text = ""
+    status_code = status.HTTP_200_OK
+    database_test = general.test_database_connection()
+    if not database_test.get("success"):
+        error_name = database_test.get("error")
+        text += f"database_error:{error_name}:"
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    if not text:
+        text = "OK"
+    return responses.PlainTextResponse(text, status_code=status_code)
+```
+
+## Best Practices
+
+1. Keep routes thin - delegate to `neural_search.util` functions
+2. Use appropriate HTTP status codes from `fastapi.status`
+3. Use `responses.JSONResponse` for JSON data, `responses.PlainTextResponse` for text
+4. Use type hints for all parameters and return types
+5. Handle exceptions appropriately - log with traceback, return appropriate status codes
+6. Use snake_case for route paths: `/most_similar`, `/recreate_collection`
+7. Define Pydantic models inline in `app.py` for request bodies
+8. Always include docstrings describing parameters and return values
