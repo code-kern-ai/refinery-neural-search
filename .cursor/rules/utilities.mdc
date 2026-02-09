@@ -1,0 +1,90 @@
+---
+description: Rules for utility functions and helper modules
+globs: ["neural_search/**/*.py"]
+alwaysApply: true
+---
+
+# Utilities Guidelines
+
+Utility functions in the `neural_search` module provide reusable, stateless helper functions for similarity search and Qdrant operations.
+
+## Module Structure
+
+- `neural_search/util.py`: Main utility functions for similarity search, collection management, outlier detection
+- `neural_search/similarity_threshold.py`: Similarity threshold calculation utilities
+
+## Common Utility Functions
+
+**Distance calculation:**
+```python
+from neural_search.util import get_distance_key
+
+distance = get_distance_key(platform, model, for_qdrant=True)
+# Returns models.Distance.EUCLID for Qdrant or "euclidean" for scipy
+```
+
+**Collection existence check:**
+```python
+from neural_search.util import collection_exists
+
+exists = collection_exists(project_id, embedding_id, include_db_check=False)
+```
+
+**Filter validation:**
+```python
+from neural_search.util import is_filter_valid_for_embedding
+
+is_valid = is_filter_valid_for_embedding(project_id, embedding_id, att_filter)
+```
+
+**Similarity threshold:**
+```python
+from neural_search.similarity_threshold import SimilarityThreshold, NO_THRESHOLD_INDICATOR
+
+threshold = sim_thr.get_threshold(project_id, embedding_id)
+threshold = sim_thr.calculate_threshold(project_id, embedding_id, percentile=5, limit=500)
+```
+
+## Helper Function Patterns
+
+**Private helper functions (prefixed with `__`):**
+```python
+def __build_filter(att_filter: List[Dict[str, Any]]) -> Optional[models.Filter]:
+    """Build Qdrant filter from attribute filter list."""
+    pass
+
+def __qdrant_collection_exits(collection_name: str) -> bool:
+    """Check if Qdrant collection exists."""
+    pass
+```
+
+**Public utility functions:**
+```python
+def most_similar(
+    project_id: str,
+    embedding_id: str,
+    record_id: str,
+    limit: int = 100,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Find similar records by record ID."""
+    pass
+```
+
+## Best Practices
+
+1. Keep utilities stateless and reusable when possible
+2. Use type hints for all function parameters and return types
+3. Document functions with docstrings describing parameters and return values
+4. Single responsibility per function
+5. Prefix private helper functions with `__`
+6. Handle Qdrant exceptions gracefully - return empty results or error status codes
+7. Validate inputs before Qdrant operations
+8. Use constants for magic values (e.g., `NO_THRESHOLD_INDICATOR = -9999`)
+9. Keep functions focused on neural search operations
+10. Make functions easily testable
+
+## Utility vs Route
+
+- **Utilities** (`neural_search/util.py`): Core business logic for similarity search, Qdrant operations, data transformations
+- **Routes** (`app.py`): HTTP handling, input validation, response formatting, calling utilities

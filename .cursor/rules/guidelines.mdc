@@ -1,0 +1,70 @@
+---
+description: Main guidelines and architecture overview for refinery-neural-search
+alwaysApply: true
+---
+
+# Refinery Neural Search Guidelines
+
+Neural search microservice guidelines ensuring consistency across API routes, Qdrant operations, and related code.
+
+## Overview
+
+The `refinery-neural-search` is a FastAPI-based microservice that provides neural search functionality powered by Qdrant vector database. It manages similarity search, outlier detection, and collection management for embeddings in the Refinery platform.
+
+## Architecture
+
+The service follows a simple microservice architecture:
+
+- **FastAPI App** (`app.py`): HTTP endpoint definitions, middleware, and request/response handling
+- **Neural Search Logic** (`neural_search/util.py`): Core business logic for similarity search and Qdrant operations
+- **Similarity Threshold** (`neural_search/similarity_threshold.py`): Threshold calculation for similarity filtering
+- **Submodules** (`submodules/model/`): Shared database models and business objects
+- **Tests** (`tests/`): Test suite using pytest and FastAPI TestClient
+
+## Guideline Files
+
+- **[fastapi-routes.mdc](./fastapi-routes.mdc)** - Rules for FastAPI route definitions in app.py
+- **[neural-search.mdc](./neural-search.mdc)** - Rules for neural search business logic patterns
+- **[middleware.mdc](./middleware.mdc)** - Rules for middleware and request processing
+- **[exceptions.mdc](./exceptions.mdc)** - Rules for exception handling
+- **[api-models.mdc](./api-models.mdc)** - Rules for Pydantic models and request/response validation
+- **[submodules.mdc](./submodules.mdc)** - Rules for working with submodules
+- **[utilities.mdc](./utilities.mdc)** - Rules for utility functions and helpers
+- **[qdrant-operations.mdc](./qdrant-operations.mdc)** - Rules for Qdrant vector database operations
+
+## General Principles
+
+1. **Simplicity**: Keep routes thin, delegate to neural_search module functions
+2. **Type Safety**: Use type hints consistently, leverage Pydantic for validation
+3. **Error Handling**: Use appropriate HTTP status codes, handle Qdrant exceptions gracefully
+4. **Database Sessions**: Sessions managed by middleware, use submodule business objects
+5. **Vector Operations**: Always validate embedding dimensions and collection existence
+6. **Submodule Integration**: Always check submodule rules before making changes to submodule code
+
+## Directory Structure
+
+```
+refinery-neural-search/
+├── app.py                 # FastAPI application with routes and middleware
+├── neural_search/         # Core neural search logic
+│   ├── __init__.py
+│   ├── util.py            # Main similarity search functions
+│   └── similarity_threshold.py  # Threshold calculation
+├── tests/                 # Test suite
+│   ├── __init__.py
+│   └── test_app.py        # API endpoint tests
+├── submodules/            # Git submodules
+│   └── model/             # Database models and business objects
+├── requirements.txt       # Python dependencies
+└── conftest.py            # Pytest configuration
+```
+
+## Quick Reference
+
+**Response Patterns**: Use `responses.JSONResponse()` for JSON data, `responses.PlainTextResponse()` for text. Return appropriate HTTP status codes.
+
+**Database**: Sessions managed by middleware via `general.get_ctx_token()` and `general.remove_and_refresh_session()`. Use submodule business objects, never create SQLAlchemy sessions directly.
+
+**Qdrant Operations**: Always check collection existence before operations. Handle Qdrant exceptions gracefully and return appropriate error responses.
+
+**Submodules**: Always check `submodules/{name}/.cursor/rules/` before modifying submodule code.

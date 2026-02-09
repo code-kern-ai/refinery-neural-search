@@ -1,0 +1,209 @@
+---
+description: Rules for neural search business logic in neural_search module
+globs: ["neural_search/**/*.py"]
+alwaysApply: true
+---
+
+# Neural Search Guidelines
+
+Business logic for similarity search, Qdrant operations, and outlier detection lives in the `neural_search` module.
+
+## Module Structure
+
+- `neural_search/util.py`: Main similarity search functions and Qdrant operations
+- `neural_search/similarity_threshold.py`: Threshold calculation for similarity filtering
+
+## Import Patterns
+
+```python
+# Qdrant client
+from qdrant_client import QdrantClient
+from qdrant_client.http import models
+
+# Submodules
+from submodules.model.business_objects import (
+    embedding,
+    record_label_association,
+    record,
+    project,
+    user,
+)
+from submodules.model.cognition_objects import group_member
+from submodules.model.enums import EmbeddingPlatform, LabelSource, UserRoles
+
+# Internal imports
+from .similarity_threshold import SimilarityThreshold, NO_THRESHOLD_INDICATOR
+```
+
+## Function Patterns
+
+**Similarity Search:**
+```python
+def most_similar_by_embedding(
+    project_id: str,
+    embedding_id: str,
+    embedding_tensor: List[float],
+    limit: int,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
+    threshold: Optional[float] = None,
+    include_scores: bool = False,
+    user_id: Optional[str] = None,
+) -> List[str]:
+    """Find similar records by embedding vector.
+    
+    Args:
+        project_id: Project identifier
+        embedding_id: Embedding identifier
+        embedding_tensor: Query embedding vector
+        limit: Maximum number of results
+        att_filter: Optional attribute filters
+        threshold: Similarity threshold (None = use DB threshold)
+        include_scores: Whether to include similarity scores
+        user_id: User ID for access control
+        
+    Returns:
+        List of record IDs or dict with id & score if include_scores=True
+    """
+    # Validate filter
+    if not is_filter_valid_for_embedding(project_id, embedding_id, att_filter):
+        return []
+    
+    # Access control checks
+    if project.check_access_management_active(project_id):
+        # ... access control logic
+    
+    # Build Qdrant filter
+    _filter = __build_filter(att_filter)
+    if check_access:
+        _filter = __add_access_management_filter(_filter, group_ids, user_id)
+    
+    # Perform search
+    search_result = qdrant_client.search(
+        collection_name=embedding_id,
+        query_vector=query_vector,
+        query_filter=_filter,
+        limit=tmp_limit,
+        score_threshold=similarity_threshold,
+    )
+    
+    # Map Qdrant IDs to record IDs
+    return embedding.get_match_record_ids_to_qdrant_ids(
+        project_id, embedding_id, ids, limit
+    )
+```
+
+**Collection Management:**
+```python
+def recreate_collection(project_id: str, embedding_id: str) -> int:
+    """Recreate Qdrant collection for embedding.
+    
+    Returns:
+        HTTP status code
+    """
+    embedding_item = embedding.get(project_id, embedding_id)
+    if not embedding_item:
+        return status.HTTP_404_NOT_FOUND
+    
+    # Get data for collection
+    filter_attribute_dict = embedding.get_filter_attribute_type_dict(
+        project_id, embedding_id
+    )
+    all_object = embedding.get_tensors_and_attributes_for_qdrant(
+        project_id, embedding_id, filter_attribute_dict
+    )
+    
+    # Recreate collection
+    qdrant_client.recreate_collection(
+        collection_name=embedding_id,
+        vectors_config=models.VectorParams(
+            size=vector_size,
+            distance=get_distance_key(embedding_item.platform, embedding_item.model),
+        ),
+    )
+    
+    # Upload records
+    qdrant_client.upload_records(collection_name=embedding_id, records=records)
+    
+    # Calculate threshold
+    sim_thr.calculate_threshold(project_id, embedding_id)
+    
+    return status.HTTP_200_OK
+```
+
+**Filter Building:**
+```python
+def __build_filter(att_filter: List[Dict[str, Any]]) -> Optional[models.Filter]:
+    """Build Qdrant filter from attribute filter list."""
+    if not att_filter:
+        return None
+    
+    must = []
+    for item in att_filter:
+        cond = __build_filter_item(item)
+        must.append(cond)
+    return models.Filter(must=must)
+
+def __build_filter_item(
+    filter_item: Dict[str, Any],
+) -> models.FieldCondition | models.Filter:
+    """Build single filter condition."""
+    key = filter_item["key"]
+    value = filter_item["value"]
+    type = filter_item.get("type", "any")
+    
+    if isinstance(value, list) and type == "between":
+        return models.FieldCondition(
+            key=key,
+            range=models.Range(gte=value[0], lte=value[1]),
+        )
+    
+    if isinstance(value, list) and type == "all":
+        conditions = [
+            models.FieldCondition(key=key, match=models.MatchValue(value=v))
+            for v in value
+        ]
+        return models.Filter(must=conditions)
+    
+    if isinstance(value, list) and type == "any":
+        return models.FieldCondition(
+            key=key,
+            match=models.MatchAny(any=value),
+        )
+    
+    return models.FieldCondition(
+        key=key,
+        match=models.MatchValue(value=value),
+    )
+```
+
+## Error Handling
+
+```python
+def most_similar_by_embedding(...):
+    try:
+        search_result = qdrant_client.search(...)
+    except Exception as e:
+        print(f"Error during search in Qdrant: {e}", flush=True)
+        print(traceback.format_exc(), flush=True)
+        return []  # Return empty list on error
+```
+
+## Constants
+
+```python
+LABELS_QDRANT = "@@labels@@"
+NO_THRESHOLD_INDICATOR = -9999
+```
+
+## Best Practices
+
+1. Always validate filters before Qdrant operations using `is_filter_valid_for_embedding()`
+2. Check collection existence before operations using `__qdrant_collection_exits()`
+3. Handle Qdrant exceptions gracefully - log errors and return empty results or appropriate status codes
+4. Use submodule business objects for database operations, never SQLAlchemy directly
+5. Calculate similarity thresholds when recreating collections
+6. Support both record IDs and tensor IDs for embeddings with sub_keys
+7. Include access control checks when access management is active
+8. Use type hints for all function parameters and return types
+9. Keep helper functions private (prefix with `__`)
+10. Document functions with docstrings describing parameters and return values

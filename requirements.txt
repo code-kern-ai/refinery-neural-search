@@ -61,7 +61,7 @@ googleapis-common-protos==1.72.0
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-grpc
-greenlet==3.2.4
+greenlet==3.3.1
     # via sqlalchemy
 grpcio==1.76.0
     # via
@@ -109,7 +109,7 @@ numpy==1.26.2
     #   pandas
     #   qdrant-client
     #   scipy
-opentelemetry-api==1.37.0
+opentelemetry-api==1.39.1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-grpc
@@ -119,43 +119,43 @@ opentelemetry-api==1.37.0
     #   opentelemetry-instrumentation-logging
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp-proto-common==1.37.0
+opentelemetry-exporter-otlp-proto-common==1.39.1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-otlp-proto-grpc==1.37.0
+opentelemetry-exporter-otlp-proto-grpc==1.39.1
     # via -r requirements/common-requirements.txt
-opentelemetry-instrumentation==0.58b0
+opentelemetry-instrumentation==0.60b1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-instrumentation-logging
-opentelemetry-instrumentation-asgi==0.58b0
+opentelemetry-instrumentation-asgi==0.60b1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-instrumentation-fastapi
-opentelemetry-instrumentation-fastapi==0.58b0
+opentelemetry-instrumentation-fastapi==0.60b1
     # via -r requirements/common-requirements.txt
-opentelemetry-instrumentation-logging==0.58b0
+opentelemetry-instrumentation-logging==0.60b1
     # via -r requirements/common-requirements.txt
-opentelemetry-proto==1.37.0
+opentelemetry-proto==1.39.1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-sdk==1.37.0
+opentelemetry-sdk==1.39.1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-semantic-conventions==0.58b0
+opentelemetry-semantic-conventions==0.60b1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-sdk
-opentelemetry-util-http==0.58b0
+opentelemetry-util-http==0.60b1
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-instrumentation-asgi
@@ -170,7 +170,7 @@ portalocker==2.10.1
     # via qdrant-client
 prometheus-client==0.23.1
     # via -r requirements/common-requirements.txt
-protobuf==6.33.1
+protobuf==6.33.5
     # via
     #   -r requirements/common-requirements.txt
     #   googleapis-common-protos
@@ -206,7 +206,7 @@ pytz==2025.2
     #   pandas
 qdrant-client==1.9.2
     # via -r requirements/requirements.in
-requests==2.32.4
+requests==2.32.5
     # via -r requirements/common-requirements.txt
 s3transfer==0.13.1
     # via
@@ -242,7 +242,7 @@ typing-extensions==4.15.0
     #   pydantic
     #   pydantic-core
     #   starlette
-urllib3==2.5.0
+urllib3==2.6.3
     # via
     #   -r requirements/common-requirements.txt
     #   botocore
