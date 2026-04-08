@@ -1,4 +1,4 @@
-FROM registry.dev.kern.ai/code-kern-ai/refinery-parent-images:parent-image-updates-common
+FROM kernai/refinery-parent-images:v2.4.0-common
 
 WORKDIR /app
 
