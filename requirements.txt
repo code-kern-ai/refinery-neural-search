@@ -36,7 +36,7 @@ botocore==1.39.17
     #   -r requirements/common-requirements.txt
     #   boto3
     #   s3transfer
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/common-requirements.txt
     #   httpcore
@@ -51,17 +51,17 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/common-requirements.txt
     #   requests
-click==8.3.2
+click==8.4.0
     # via
     #   -r requirements/common-requirements.txt
     #   uvicorn
 fastapi==0.120.1
     # via -r requirements/common-requirements.txt
-googleapis-common-protos==1.74.0
+googleapis-common-protos==1.75.0
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-grpc
-greenlet==3.3.2
+greenlet==3.5.0
     # via sqlalchemy
 grpcio==1.80.0
     # via
@@ -86,7 +86,7 @@ httpx[http2]==0.28.1
     # via qdrant-client
 hyperframe==6.1.0
     # via h2
-idna==3.11
+idna==3.15
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
@@ -160,7 +160,7 @@ opentelemetry-util-http==0.60b1
     #   -r requirements/common-requirements.txt
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
-packaging==26.0
+packaging==26.2
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-instrumentation
@@ -200,13 +200,13 @@ python-dateutil==2.9.0.post0
     #   -r requirements/common-requirements.txt
     #   botocore
     #   pandas
-pytz==2026.1.post1
+pytz==2026.2
     # via
     #   -r requirements/common-requirements.txt
     #   pandas
 qdrant-client==1.9.2
     # via -r requirements/requirements.in
-requests==2.33.0
+requests==2.34.2
     # via -r requirements/common-requirements.txt
 s3transfer==0.13.1
     # via
@@ -243,7 +243,7 @@ typing-inspection==0.4.2
     # via
     #   -r requirements/common-requirements.txt
     #   pydantic
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -r requirements/common-requirements.txt
     #   botocore
@@ -256,7 +256,7 @@ wrapt==1.17.3
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-instrumentation
-zipp==3.23.0
+zipp==3.23.1
     # via
     #   -r requirements/common-requirements.txt
     #   importlib-metadata
