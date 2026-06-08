@@ -14,6 +14,8 @@ steps:
       - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker:21
+    environment:
+      BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
     depends_on:
       - submodules
     settings:
@@ -84,6 +86,8 @@ steps:
       - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker:21
+    environment:
+      BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
     depends_on:
       - submodules
     settings:
@@ -128,9 +132,16 @@ steps:
       - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker:21
+    environment:
+      BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
     depends_on:
       - submodules
     settings:
+      base_image_registry: dhi.io
+      base_image_username:
+        from_secret: dockerhub_username
+      base_image_password:
+        from_secret: dockerhub_password
       username:
         from_secret: dockerhub_username
       password:
@@ -160,9 +171,16 @@ steps:
       - "git submodule update --recursive"
   - name: build and publish
     image: plugins/docker:21
+    environment:
+      BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
     depends_on:
       - submodules
     settings:
+      base_image_registry: dhi.io
+      base_image_username:
+        from_secret: dockerhub_username
+      base_image_password:
+        from_secret: dockerhub_password
       username:
         from_secret: dockerhub_username
       password:
