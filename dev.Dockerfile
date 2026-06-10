@@ -1,8 +1,11 @@
-FROM kernai/refinery-parent-images:v2.5.0-common
+ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:dev-common
+FROM ${PARENT_IMAGE}
 
 WORKDIR /app
 
 VOLUME ["/app"]
+
+USER root
 
 COPY requirements*.txt .
 
@@ -10,4 +13,4 @@ RUN pip3 install --no-cache-dir -r requirements-dev.txt
 
 COPY / .
 
-CMD [ "/usr/local/bin/uvicorn", "--host", "0.0.0.0", "--port", "80", "app:app", "--reload" ]
+CMD ["/usr/local/bin/uvicorn", "--host", "0.0.0.0", "--port", "80", "app:app", "--reload"]
