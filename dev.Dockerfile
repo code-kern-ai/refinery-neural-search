@@ -1,4 +1,4 @@
-ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:dev-common
+ARG PARENT_IMAGE=python:3.11-slim
 FROM ${PARENT_IMAGE}
 
 WORKDIR /app
