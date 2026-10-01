@@ -109,9 +109,6 @@ steps:
         - "registry.dev.kern.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}_arm64"
 
 trigger:
-  branch:
-    - dev
-    - beta-v2
   event:
     - push
 
