@@ -32,7 +32,7 @@ charset-normalizer==3.5.2
     # via requests
 click==8.5.0
     # via uvicorn
-fastapi==0.142.2
+fastapi==0.136.3
     # via -r mini-requirements.in
 googleapis-common-protos==1.75.5
     # via opentelemetry-exporter-otlp-proto-grpc
@@ -57,7 +57,6 @@ numpy==1.26.2
 opentelemetry-api==1.45.0
     # via
     #   -r common-requirements.in
-    #   fastapi
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
