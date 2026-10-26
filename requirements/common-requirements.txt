@@ -22,7 +22,7 @@ botocore==1.39.17
     # via
     #   boto3
     #   s3transfer
-certifi==2026.7.22
+certifi==2026.10.19
     # via
     #   minio
     #   requests
