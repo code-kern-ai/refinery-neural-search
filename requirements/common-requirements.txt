@@ -54,7 +54,7 @@ numpy==1.26.2
     # via
     #   -r common-requirements.in
     #   pandas
-opentelemetry-api==1.45.0
+opentelemetry-api==1.45.1
     # via
     #   -r common-requirements.in
     #   opentelemetry-exporter-otlp-proto-grpc
