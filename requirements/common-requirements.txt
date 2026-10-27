@@ -14,7 +14,7 @@ argon2-cffi==25.1.0
     # via minio
 argon2-cffi-bindings==26.1.0
     # via argon2-cffi
-asgiref==3.12.1
+asgiref==3.13.0
     # via opentelemetry-instrumentation-asgi
 boto3==1.39.6
     # via -r common-requirements.in
@@ -22,7 +22,7 @@ botocore==1.39.17
     # via
     #   boto3
     #   s3transfer
-certifi==2026.7.22
+certifi==2026.10.23
     # via
     #   minio
     #   requests
@@ -34,9 +34,9 @@ click==8.5.0
     # via uvicorn
 fastapi==0.136.3
     # via -r mini-requirements.in
-googleapis-common-protos==1.75.5
+googleapis-common-protos==1.76.0
     # via opentelemetry-exporter-otlp-proto-grpc
-grpcio==1.84.0
+grpcio==1.85.0
     # via opentelemetry-exporter-otlp-proto-grpc
 h11==0.16.0
     # via uvicorn
@@ -48,13 +48,13 @@ jmespath==1.1.0
     # via
     #   boto3
     #   botocore
-minio==7.2.15
+minio==7.2.20
     # via -r common-requirements.in
-numpy==1.26.2
+numpy==1.26.4
     # via
     #   -r common-requirements.in
     #   pandas
-opentelemetry-api==1.45.0
+opentelemetry-api==1.45.1
     # via
     #   -r common-requirements.in
     #   opentelemetry-exporter-otlp-proto-grpc
@@ -64,47 +64,47 @@ opentelemetry-api==1.45.0
     #   opentelemetry-instrumentation-logging
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp-common==0.66b0
+opentelemetry-exporter-otlp-common==0.66b1
     # via opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-otlp-proto-common==1.45.0
+opentelemetry-exporter-otlp-proto-common==1.45.1
     # via opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-otlp-proto-grpc==1.45.0
+opentelemetry-exporter-otlp-proto-grpc==1.45.1
     # via -r common-requirements.in
-opentelemetry-instrumentation==0.66b0
+opentelemetry-instrumentation==0.66b1
     # via
     #   -r common-requirements.in
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-instrumentation-logging
-opentelemetry-instrumentation-asgi==0.66b0
+opentelemetry-instrumentation-asgi==0.66b1
     # via opentelemetry-instrumentation-fastapi
-opentelemetry-instrumentation-fastapi==0.66b0
+opentelemetry-instrumentation-fastapi==0.66b1
     # via -r common-requirements.in
-opentelemetry-instrumentation-logging==0.66b0
+opentelemetry-instrumentation-logging==0.66b1
     # via -r common-requirements.in
-opentelemetry-proto==1.45.0
+opentelemetry-proto==1.45.1
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-sdk==1.45.0
+opentelemetry-sdk==1.45.1
     # via
     #   -r common-requirements.in
     #   opentelemetry-exporter-otlp-common
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-semantic-conventions==0.66b0
+opentelemetry-semantic-conventions==0.66b1
     # via
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-instrumentation-logging
     #   opentelemetry-sdk
-opentelemetry-util-http==0.66b0
+opentelemetry-util-http==0.66b1
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
 packaging==26.3
     # via opentelemetry-instrumentation
-pandas==1.5.1
+pandas==1.5.3
     # via -r common-requirements.in
 prometheus-client==0.26.0
     # via -r common-requirements.in
@@ -112,23 +112,23 @@ protobuf==7.36.2
     # via
     #   googleapis-common-protos
     #   opentelemetry-proto
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.13
     # via -r common-requirements.in
-pycparser==3.0
+pycparser==3.12
     # via cffi
-pycryptodome==3.23.0
+pycryptodome==4.2.0
     # via minio
-pydantic==2.13.5
+pydantic==2.14.1
     # via
     #   -r mini-requirements.in
     #   fastapi
-pydantic-core==2.46.5
+pydantic-core==2.50.1
     # via pydantic
 python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   pandas
-pytz==2026.4
+pytz==2026.5
     # via pandas
 requests==2.34.2
     # via -r mini-requirements.in
@@ -136,9 +136,9 @@ s3transfer==0.13.1
     # via boto3
 six==1.17.0
     # via python-dateutil
-sqlalchemy==1.4.42
+sqlalchemy==1.4.52
     # via -r common-requirements.in
-starlette==1.7.0
+starlette==1.10.0
     # via fastapi
 typing-extensions==4.16.0
     # via
@@ -165,5 +165,5 @@ urllib3==2.8.0
     #   requests
 uvicorn==0.54.0
     # via -r mini-requirements.in
-wrapt==2.5.0
+wrapt==2.5.1
     # via opentelemetry-instrumentation
